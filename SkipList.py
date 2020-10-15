@@ -3,7 +3,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 """
-Class definitions for LLNode, SortedLinkedList, and SkipList 
+Class definitions for LLNode, SortedLinkedList, and SkipList
 """
 
 class LLNode:
@@ -11,6 +11,9 @@ class LLNode:
         self.key = key
         self.neighbors = {}
 
+    def get_height(self):
+        return max(self.neighbors)
+        
     def get_right_ptr(self, atlevel):
         return self.neighbors[atlevel][1]
 
@@ -251,6 +254,7 @@ class SkipList:
             nx.draw_networkx(G, pos = positions)
         plt.show()
 
+
     def __str__(self):
         s = ''
         for LL in self.LLs:
@@ -263,8 +267,8 @@ class SkipList:
 
 if __name__ == "__main__":
     SL = SkipList(p = 0.5)
-    for i in range(20):
+    for i in range(10):
         x = random.randint(0,100)
         SL.insert(x)
     print(SL)
-    SL.visualize()
+    fig = SL.visualize()

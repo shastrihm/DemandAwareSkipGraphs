@@ -14,6 +14,14 @@ class LLNode:
             self.memvec.append(random.choice([0,1]))
         return self.memvec[i]
 
+    def set_memvec_bit(self, i, newbit):
+        while len(self.memvec) - 1 < i:
+            self.memvec.append(random.choice([0,1]))
+        self.memvec[i] = newbit
+
+    def remove_memvec_bit(self, i):
+        return self.memvec.pop(i)
+
     def memvec_len(self):
         return len(self.memvec)
 
@@ -37,6 +45,9 @@ class LLNode:
             self.neighbors[atlevel] = [node, None]
         else:
             self.neighbors[atlevel][0] = node
+
+    def clear_level(self, level):
+        self.neighbors.pop(level, None)
 
 class SortedLinkedList:
     """
@@ -173,6 +184,27 @@ class SortedLinkedList:
             curr = curr.get_right_ptr(self.level)
         return l
 
+    def decrement_level_by_one(self):
+        curr = self.head
+        while curr is not None:
+            l = curr.get_left_ptr(self.level)
+            r = curr.get_right_ptr(self.level)
+            curr.set_right_ptr(r, self.level - 1)
+            curr.set_left_ptr(l, self.level - 1)
+            next = curr.get_right_ptr(self.level)
+            curr.clear_level(self.level)
+            curr = next
+        self.level -= 1
+
+    def map(self, fn):
+        """
+        applies fn to every node in the LL
+        """
+        curr = self.head
+        while curr is not None:
+            fn(curr)
+            curr = curr.get_right_ptr(self.level)
+
     def __len__(self):
         return self.len
 
@@ -187,3 +219,6 @@ class SortedLinkedList:
     def __contains__(self, key):
         n = self.search(key, self.head)
         return (n is not None and n.key == key)
+
+    def __eq__(self, other):
+        return self.as_list() == other.as_list()

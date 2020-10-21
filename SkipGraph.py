@@ -3,13 +3,15 @@ import random
 
 class SkipGraph:
     def __init__(self):
-        self.level0 = SortedLinkedList()
+        self.level0 = SortedLinkedList(level = 0)
 
-    def search(self, key, fromNode = None):
+    def search(self, key, fromNode = None, needLL = False):
         """
         returns node with key. Otherwise returns None
         fromNode: node to start search from. Must be a node that
                     belongs in the Skip Graph
+        neadLL : also returns the specific Linked List search path ends in if True,
+                 otherwise just returns the node with the key
         """
         if fromNode is None:
             fromNode = self.level0.head
@@ -21,10 +23,10 @@ class SkipGraph:
         while fromLL is not None:
             fromNode = fromLL.search(key, fromNode)
             if fromNode.key == key:
-                return fromNode
+                return fromNode if not needLL else (fromNode, fromLL)
             fromLL = fromLL.parent
 
-        return None
+        return None if not needLL else (None, None)
 
     def insert(self, key):
         """
@@ -64,7 +66,7 @@ class SkipGraph:
         while currList is not None:
             currList.delete(node.key)
             currList = currList.parent
-            # purge empty linked lists 
+            # purge empty linked lists
             if currList is not None:
                 if len(currList.children[0]) == 0:
                     currList.children[0] = None

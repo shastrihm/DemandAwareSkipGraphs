@@ -2,6 +2,7 @@ from SkipGraph import SkipGraph
 from SortedLinkedList import SortedLinkedList
 import random
 
+
 class AdaptiveSkipGraphV1(SkipGraph):
     """
     Variant of skip graph that adapts to the input requests in the following strategy:
@@ -15,6 +16,14 @@ class AdaptiveSkipGraphV1(SkipGraph):
         is localized to the "sub"-skip graph beggining only in the level in which
         the last linked list containing both u and v appears.
 
+------------------
+        This strategy is only sound if the skip graph is a "perfect"-skip graph -
+        i.e. every node appears in a length one or two linked list.
+
+        In practice, Skip Graphs can contain nodes whose maximum level is not the
+        maximum level of the skip graph, which means their final linked list can be
+        of length greater than 2.
+        NOTE to self: modify this algorithm to account for "imperfect" skip graphs 
     """
     def __init__(self):
         SkipGraph.__init__(self)
@@ -88,6 +97,7 @@ class AdaptiveSkipGraphV1(SkipGraph):
             prevLL.children[newb].insert(v)
             u.leafLL = prevLL.children[newb]
             v.leafLL = prevLL.children[newb]
+            prevLL.children[newb].parent = prevLL
 
 
     def __delete_from_subpath(self, u, fromLL):
@@ -140,6 +150,7 @@ class AdaptiveSkipGraphV1(SkipGraph):
         LL.decrement_level_by_one()
         self.__height_decrementer_helper(LL.children[0])
         self.__height_decrementer_helper(LL.children[1])
+
 
 
 if __name__ == "__main__":

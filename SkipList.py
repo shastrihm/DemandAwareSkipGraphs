@@ -75,20 +75,6 @@ class SkipList:
         self.update_head()
         return flag
 
-    def visualize(self):
-        x_coords = {}
-        G = self.LLs[0].graphify()
-        i = 0
-        for n in G.nodes:
-            x_coords[n] = i
-            i += 1
-
-        for LL in self.LLs:
-            G = LL.graphify()
-            positions = {n: (x_coords[n], LL.level) for n in G.nodes}
-            nx.draw_networkx(G, pos = positions)
-        plt.show()
-
 
     def __str__(self):
         s = ''
@@ -106,4 +92,3 @@ if __name__ == "__main__":
         x = random.randint(0,100)
         SL.insert(x)
     print(SL)
-    fig = SL.visualize()

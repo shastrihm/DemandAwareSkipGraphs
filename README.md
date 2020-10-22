@@ -1,5 +1,10 @@
 # Thesis
-Playing around with skip lists and skip graphs
+Playing around with skip lists and skip graphs.
+Python libraries: Graphviz, PyDot, imageio
 
-git commit -a -m "message"
-git push 
+git add .
+git commit -m "message"
+git push
+
+
+python3 -m pip install numpy

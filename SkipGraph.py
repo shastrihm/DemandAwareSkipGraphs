@@ -1,5 +1,7 @@
 from SortedLinkedList import LLNode, SortedLinkedList
 import random
+import os
+import pydot
 
 class SkipGraph:
     def __init__(self):
@@ -60,7 +62,7 @@ class SkipGraph:
 
     def delete(self, node):
         """
-        deletes node with key from the Skip Graph
+        Given a node, deletes it from the skip graph.
         """
         currList = node.leafLL
         while currList is not None:
@@ -75,6 +77,39 @@ class SkipGraph:
 
         node.leafLL = None
 
+    def visualize(self, path):
+        """
+        Creates png of skip graph, saves it to path (where path includes
+        filename.png)
+        """
+
+        graph = pydot.Dot(rankdir = "BT", fontsize = "15")
+        shape = "circle" if len(self.level0) == 1 else "box"
+        node = pydot.Node(str(self.level0), shape = shape)
+        graph.add_node(node)
+
+        def helper(currLL, currLLnode):
+            l = currLL.children[0]
+            r = currLL.children[1]
+            if l is not None:
+                shape = "circle" if len(l) == 1 else "box"
+                lnode = pydot.Node(str(l), shape = shape)
+                edge = pydot.Edge(currLLnode, lnode, label = "0", arrowhead = "None")
+                graph.add_node(lnode)
+                graph.add_edge(edge)
+                helper(l, lnode)
+            if r is not None:
+                shape = "circle" if len(r) == 1 else "box"
+                rnode = pydot.Node(str(r), shape = shape)
+                edge = pydot.Edge(currLLnode, rnode, label = "1", arrowhead= "None")
+                graph.add_node(rnode)
+                graph.add_edge(edge)
+                helper(r, rnode)
+            return
+
+        helper(self.level0, node)
+        graph.write_png(path)
+        return graph
 
 
     def __str__(self):
@@ -105,4 +140,5 @@ class SkipGraph:
 if __name__ == "__main__":
     S = SkipGraph()
     for i in range(10):
-        S.insert(random.randint(0,50))
+        S.insert(random.randint(0,1000))
+    S.visualize()

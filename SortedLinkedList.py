@@ -1,6 +1,5 @@
 import random
-import networkx as nx
-import matplotlib.pyplot as plt
+
 
 class LLNode:
     def __init__(self, key):
@@ -162,20 +161,6 @@ class SortedLinkedList:
         self.head = None
         self.len = 0
 
-    def graphify(self):
-        """
-        returns a networkx graph representing this LL
-        """
-        G = nx.Graph()
-        curr = self.head
-        while curr is not None:
-            G.add_node(curr.key)
-            next = curr.get_right_ptr(self.level)
-            if next is not None:
-                G.add_edge(curr.key, next.key)
-            curr = next
-        return G
-
     def as_list(self):
         l = []
         curr = self.head
@@ -209,12 +194,15 @@ class SortedLinkedList:
         return self.len
 
     def __str__(self):
-        l = []
         curr = self.head
+        s = ''
         while curr is not None:
-            l.append(curr.key)
+            s = s + str(curr.key) + "―"
             curr = curr.get_right_ptr(self.level)
-        return str(l)
+        rs = s[:len(s)-1]
+        if len(rs) == 0:
+            return " "
+        return rs
 
     def __contains__(self, key):
         n = self.search(key, self.head)

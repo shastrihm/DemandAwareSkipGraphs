@@ -15,15 +15,6 @@ class AdaptiveSkipGraphV1(SkipGraph):
         the prefix of the other. Additionally, modification to the Skip Graph
         is localized to the "sub"-skip graph beggining only in the level in which
         the last linked list containing both u and v appears.
-
-------------------
-        This strategy is only sound if the skip graph is a "perfect"-skip graph -
-        i.e. every node appears in a length one or two linked list.
-
-        In practice, Skip Graphs can contain nodes whose maximum level is not the
-        maximum level of the skip graph, which means their final linked list can be
-        of length greater than 2.
-        NOTE to self: modify this algorithm to account for "imperfect" skip graphs 
     """
     def __init__(self):
         SkipGraph.__init__(self)

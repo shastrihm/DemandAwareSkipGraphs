@@ -57,6 +57,18 @@ class SkipGraph:
             prevList.children[nb].parent = prevList
             newNode.leafLL = prevList.children[nb]
 
+            assert(len(prevList) == 2)
+            if prevList.head == newNode:
+                otherNode = prevList.head.get_right_ptr(i - 1)
+            else:
+                otherNode = prevList.head
+            ob = nb ^ 1
+            prevList.children[ob] = SortedLinkedList(level = i)
+            prevList.children[ob].insert(otherNode)
+            prevList.children[ob].parent = prevList
+            otherNode.leafLL = prevList.children[ob]
+
+
         return True
 
 

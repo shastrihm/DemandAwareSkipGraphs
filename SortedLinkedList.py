@@ -18,6 +18,15 @@ class LLNode:
             self.memvec.append(random.choice([0,1]))
         self.memvec[i] = newbit
 
+    def add_memvec_bit(self, newbit):
+        self.memvec.append(newbit)
+
+    def set_memvec(self, other_memvec):
+        self.memvec = other_memvec.copy()
+
+    def get_memvec(self):
+        return self.memvec
+
     def remove_memvec_bit(self, i):
         return self.memvec.pop(i)
 
@@ -47,6 +56,11 @@ class LLNode:
 
     def clear_level(self, level):
         self.neighbors.pop(level, None)
+
+    def reset(self):
+        self.neighbors = {}
+        self.leafLL = None
+        self.memvec = []
 
 class SortedLinkedList:
     """

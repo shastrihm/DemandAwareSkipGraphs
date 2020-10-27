@@ -11,7 +11,7 @@ class SkipGraph:
         """
         returns node with key. Otherwise returns None
         fromNode: node to start search from. Must be a node that
-                    belongs in the Skip Graph
+                    belongs in the Skip Graph.
         neadLL : also returns the specific Linked List search path ends in if True,
                  otherwise just returns the node with the key
         """
@@ -32,12 +32,15 @@ class SkipGraph:
 
     def insert(self, key):
         """
-        Inserts key into skip graph.
+        Inserts key into skip graph. Key can also be of type node.
         If key was already in the skip graph, does nothing and returns False
         """
-        newNode = LLNode(key)
-        if key in self.level0:
-            return False
+        if isinstance(key, int):
+            newNode = LLNode(key)
+            if key in self.level0:
+                return False
+        else:
+            newNode = key
 
         currList = self.level0
         prevList = None
@@ -67,6 +70,7 @@ class SkipGraph:
             prevList.children[ob].insert(otherNode)
             prevList.children[ob].parent = prevList
             otherNode.leafLL = prevList.children[ob]
+            otherNode.add_memvec_bit(ob)
 
 
         return True
@@ -74,20 +78,45 @@ class SkipGraph:
 
     def delete(self, node):
         """
-        Given a node, deletes it from the skip graph.
+        Given a node, deletes it from the skip graph. Returns said node.
         """
         currList = node.leafLL
         while currList is not None:
             currList.delete(node.key)
-            currList = currList.parent
-            # purge empty linked lists
+            next = currList.parent
+            if len(currList) == 0: # purge empty linked lists
+                currList = None
             if currList is not None:
-                if len(currList.children[0]) == 0:
-                    currList.children[0] = None
-                elif len(currList.children[1]) == 1:
-                    currList.children[1] = NOne
+                for i in [0,1]: # purge redundant linked lists
+                    child = currList.children[i]
+                    if child is not None and child == currList:
+                        gchild1 = child.children[1]
+                        gchild0 = child.children[0]
+                        currList.children[0] = gchild0
+                        currList.children[1] = gchild1
+                        if gchild0 is not None:
+                            gchild0.parent = currList
+                        if gchild1 is not None:
+                            gchild1.parent = currList
+                        l = currList.level  #amend memvecs, decrease height of LLs in subtree
+                        currList.map(lambda n : n.remove_memvec_bit(l))
+                        self.__height_decrementer_helper(currList.children[0])
+                        self.__height_decrementer_helper(currList.children[1])
+            currList = next
 
         node.leafLL = None
+
+        return node
+
+    def __height_decrementer_helper(self, LL):
+        """
+        decrements height in all linked lists from subtree rooted at LL
+        """
+        if LL is None:
+            return
+        LL.decrement_level_by_one()
+        self.__height_decrementer_helper(LL.children[0])
+        self.__height_decrementer_helper(LL.children[1])
 
     def visualize(self, path):
         """
@@ -104,6 +133,7 @@ class SkipGraph:
             l = currLL.children[0]
             r = currLL.children[1]
             if l is not None:
+                assert(l != currLL)
                 shape = "circle" if len(l) == 1 else "box"
                 lnode = pydot.Node(str(l), shape = shape)
                 edge = pydot.Edge(currLLnode, lnode, label = "0", arrowhead = "None")
@@ -111,6 +141,7 @@ class SkipGraph:
                 graph.add_edge(edge)
                 helper(l, lnode)
             if r is not None:
+                assert(r != currLL)
                 shape = "circle" if len(r) == 1 else "box"
                 rnode = pydot.Node(str(r), shape = shape)
                 edge = pydot.Edge(currLLnode, rnode, label = "1", arrowhead= "None")

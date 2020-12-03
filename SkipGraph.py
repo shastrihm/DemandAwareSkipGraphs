@@ -1,7 +1,9 @@
 from SortedLinkedList import LLNode, SortedLinkedList
 import random
 import os
+import itertools
 import pydot
+import math
 
 class SkipGraph:
     def __init__(self):
@@ -55,23 +57,28 @@ class SkipGraph:
         if len(prevList) == 1:
             newNode.leafLL = prevList
         else:
-            prevList.children[nb] = SortedLinkedList(level = i)
-            prevList.children[nb].insert(newNode)
-            prevList.children[nb].parent = prevList
-            newNode.leafLL = prevList.children[nb]
-
             assert(len(prevList) == 2)
             if prevList.head == newNode:
                 otherNode = prevList.head.get_right_ptr(i - 1)
             else:
                 otherNode = prevList.head
-            ob = nb ^ 1
+
+            ob = otherNode.get_memvec_bit(i-1)
+            nb = ob ^ 1
+            newNode.set_memvec_bit(i-1, nb)
+            prevList.children[nb] = SortedLinkedList(level = i)
+            prevList.children[nb].insert(newNode)
+            prevList.children[nb].parent = prevList
+            newNode.leafLL = prevList.children[nb]
+
+
             prevList.children[ob] = SortedLinkedList(level = i)
             prevList.children[ob].insert(otherNode)
             prevList.children[ob].parent = prevList
             otherNode.leafLL = prevList.children[ob]
-            otherNode.add_memvec_bit(ob)
 
+            # print("inserted node : ", newNode.key, newNode.memvec)
+            # print("other node : ", otherNode.key, otherNode.memvec)
 
         return True
 
@@ -108,6 +115,14 @@ class SkipGraph:
 
         return node
 
+
+    def init_random(self, vals):
+        """
+        initializes a random skip graph with all keys in list vals
+        """
+        for i in vals:
+            self.insert(i)
+        
     def __height_decrementer_helper(self, LL):
         """
         decrements height in all linked lists from subtree rooted at LL
@@ -179,9 +194,27 @@ class SkipGraph:
             i -= 1
         return s
 
+#
+def generate_balanced_skipgraph(n, constructor = SkipGraph):
+    """
+    n is a power of 2. generates a skip graph that is completely balanced (all leaf nodes are same height)
+    """
+    l = int(math.log(n,2)) - 3
+    mvecs = [[0,0,0],[1,0,0], [0,1,0], [1,1,0],[0,0,1], [0,1,1], [1,0,1], [1,1,1]]
+    while l > 0:
+        mvecs = [i + [0] for i in mvecs] + [i + [1] for i in mvecs]
+        l -= 1
+    S = constructor()
+    for i in range(n):
+        node = LLNode(i)
+        node.set_memvec(mvecs[i])
+        S.insert(node)
+    return S
+
 
 if __name__ == "__main__":
-    S = SkipGraph()
-    for i in range(10):
-        S.insert(random.randint(0,1000))
-    S.visualize()
+    # S = SkipGraph()
+    # for i in range(16):
+    #     S.insert(random.randint(0,1000))
+    # S.visualize("big.png")
+    S = generate_balanced_skipgraph(8)#.visualize("big.png")

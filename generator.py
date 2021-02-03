@@ -26,7 +26,8 @@ def disjoint_demand_generator(n, threshold, samples = 1000):
 
 def uniform_demand_generator(n, samples = 1000):
     """
-    Returns requests sampled uniformly at random
+    Returns requests sampled uniformly at random.
+    n is the key set [0,...,n]
     """
     requests = []
     for i in range(samples):

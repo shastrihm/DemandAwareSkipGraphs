@@ -40,8 +40,7 @@ class AdaptiveSkipGraphV1(SkipGraph):
 
         ### This lazier implementation is much less complicated and has
         #### the exact same desired effect, moving the two nodes together
-        ### in a len 2 LL. There is no need to be completely faithful to the precise implementation
-        ### for simulatory purposes
+        ### in a len 2 LL. 
         self.delete(move)
         move.reset()
         move.set_memvec(stay.get_memvec())

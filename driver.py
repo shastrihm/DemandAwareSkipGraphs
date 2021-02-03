@@ -78,9 +78,9 @@ class Driver:
 
 
 if __name__ == "__main__":
-    N = 8
-    thresh = 4
-    SAMPLES = 100
+    N = 32
+    thresh = 8
+    SAMPLES = 10000
     p = 0.5
     S = generate_balanced_skipgraph(N, constructor = ProbDemoteSkipGraph)
     #S = ProbDemoteSkipGraph()
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     S.set_p(p)
     D = Driver(S, "probDemote")
 
-    for req in generator.repeated_source_demand_generator(N-1, 0, SAMPLES):
+    for req in generator.disjoint_demand_generator(N-1,thresh, SAMPLES):
         u,v = req
         print(req)
         D.search(v, u, suppress = True)

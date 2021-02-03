@@ -57,6 +57,15 @@ class LLNode:
     def clear_level(self, level):
         self.neighbors.pop(level, None)
 
+    def print_neighbors(self):
+        for lev in self.neighbors:
+            x,y = None, None
+            if self.neighbors[lev][0] is not None:
+                x = self.neighbors[lev][0].key
+            if self.neighbors[lev][1] is not None:
+                y = self.neighbors[lev][1].key
+            print(lev, 'left neighb', x, 'right neighb', y)
+
     def reset(self):
         self.neighbors = {}
         self.leafLL = None
@@ -203,6 +212,7 @@ class SortedLinkedList:
         while curr is not None:
             fn(curr)
             curr = curr.get_right_ptr(self.level)
+
 
     def __len__(self):
         return self.len

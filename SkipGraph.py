@@ -205,6 +205,34 @@ class SkipGraph:
                 return r
             return l
 
+    def DFS_map(self, startLL, fn, depth = 1):
+        """
+        performs fn on each LL through a depth first search of the
+        LLs starting at root startLL
+        """
+        if startLL is None:
+            return
+        else:
+            fn(startLL, i = depth)
+            left = startLL.children[0]
+            right = startLL.children[1]
+            l = self.DFS_map(left, fn, depth = depth + 1)
+            r = self.DFS_map(right, fn, depth = depth + 1)
+
+    def path_to_root_map(self, startLL, endLL, fn):
+        """
+        Calls fn on all linked lists on the path from startLL
+        to endLL (not including endLL), in order from startLL to endLL
+        """
+        if startLL is endLL or startLL is None:
+            return
+        else:
+            parent = startLL.parent
+            fn(startLL)
+            self.path_to_root_map(parent, endLL, fn)
+
+
+
     def get_all_leaves_with_path(self, fromLL):
         """
         Returns a dict where each LLnode in the subskip graph rooted at
@@ -228,6 +256,15 @@ class SkipGraph:
         helper(fromLL)
         return dict
 
+    def update_memvecs(self):
+        """
+        updates memvecs for each node.
+        This is expensive, only do this if necessary (shouldn't be, unless insertion).
+        Searching/deleting does not use memvecs. Only insertion does.
+        """
+        d = self.get_all_leaves_with_path(self.level0)
+        for node in d:
+            node.set_memvec(d[node])
 
 
     def swap(self, LL1, LL2):

@@ -64,12 +64,31 @@ class LLNode:
                 x = self.neighbors[lev][0].key
             if self.neighbors[lev][1] is not None:
                 y = self.neighbors[lev][1].key
-            print(lev, 'left neighb', x, 'right neighb', y)
+            print(lev, " [", x, y, "]")
 
     def reset(self):
         self.neighbors = {}
         self.leafLL = None
         self.memvec = []
+
+
+def shift_neighbors(neighbors, startLevel, inc):
+    """
+    shifts all routing table entries with level greater or equal to
+    startLevel by inc
+    """
+    if inc > 0:
+        if startLevel == max(neighbors):
+            neighbors[startLevel + inc] = neighbors[startLevel]
+        else:
+            shift_neighbors(neighbors, startLevel + 1, inc)
+            neighbors[startLevel + inc] = neighbors[startLevel]
+    else:
+        if startLevel == max(neighbors):
+            neighbors[startLevel + inc] = neighbors[startLevel]
+        else:
+            neighbors[startLevel + inc] = neighbors[startLevel]
+            shift_neighbors(neighbors, startLevel + 1, inc)
 
 class SortedLinkedList:
     """
@@ -192,6 +211,7 @@ class SortedLinkedList:
             curr = curr.get_right_ptr(self.level)
         return l
 
+
     def decrement_level_by_one(self):
         curr = self.head
         while curr is not None:
@@ -204,6 +224,34 @@ class SortedLinkedList:
             curr = next
         self.level -= 1
 
+    def move_level_by_n(self, inc):
+        curr = self.head
+        while curr is not None:
+            l = curr.get_left_ptr(self.level)
+            r = curr.get_right_ptr(self.level)
+            curr.set_right_ptr(r, self.level + inc)
+            curr.set_left_ptr(l, self.level + inc)
+            next = curr.get_right_ptr(self.level)
+            #curr.clear_level(self.level) DONT DO THIS IF INC = 0
+            curr = next
+        self.level += inc
+
+    def update_level(self, inc):
+        if inc == 0:
+            return
+        if self.children[0] is None and self.children[1] is None:
+            self.move_level_by_n(inc)
+        elif inc > 0:
+            self.children[0].update_level(inc)
+            self.children[1].update_level(inc)
+            self.move_level_by_n(inc)
+        else:
+            self.move_level_by_n(inc)
+            self.children[0].update_level(inc)
+            self.children[1].update_level(inc)
+
+
+
     def map(self, fn):
         """
         applies fn to every node in the LL
@@ -213,7 +261,40 @@ class SortedLinkedList:
             fn(curr)
             curr = curr.get_right_ptr(self.level)
 
+    def which_child(self):
+        """
+        returns 1 if self.parent.children[1] is self else 0
+        None if
+        """
+        parent = self.parent
+        if parent is None:
+            return None
+        return 1 if parent.children[1] is self else 0
 
+
+    def child_with_key(self, key):
+        """
+        Returns the child list that contains key, otherwise None if neither do
+        """
+        if self.children[0] is None and self.children[1] is None:
+            return None
+        if key in self.children[0]:
+            return self.children[0]
+        if key in self.children[1]:
+            return self.children[1]
+
+
+    def child_without_key(self, key):
+        """
+        Returns the child list that does not contains key, otherwise None if neither do
+        """
+        if self.children[0] is None and self.children[1] is None:
+            return None
+        if key not in self.children[0]:
+            return self.children[0]
+        if key not in self.children[1]:
+            return self.children[1]
+            
     def __len__(self):
         return self.len
 
@@ -234,3 +315,8 @@ class SortedLinkedList:
 
     def __eq__(self, other):
         return self.as_list() == other.as_list()
+
+    def __iter__(self):
+        nodelist = self.as_list()
+        for node in nodelist:
+            yield node

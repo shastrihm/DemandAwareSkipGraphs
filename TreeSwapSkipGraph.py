@@ -1,26 +1,27 @@
 from SkipGraph import SkipGraph, generate_balanced_skipgraph, generate_spine_skipgraph
-from AdaptiveSkipGraph_v1 import AdaptiveSkipGraphV1
 from SortedLinkedList import SortedLinkedList, LLNode, shift_neighbors
 import random
 import generator as g
 
 class TreeSwapSkipGraph(SkipGraph):
-    def __init__(self, p = 0):
+    def __init__(self, p = 1):
         """
-        p = braid?
+        p = probability of tree swap
         """
+        self.p = p
         SkipGraph.__init__(self)
 
     def search(self, key, fromNode):
         """
         Returns the node with key as initiated by a search from fromNode.
-        Adjusts after a search, if found.
+        Adjusts after a search, if found, with probability p.
         - say u successfully searches for v. Let LL_uv be their least common ancestor.
         - Let LL_u be the subskipgraph depth two from LL_uv that contains u,
             and let LL'_u be LL_u's sibling subskipgraph
         - Let LL_v be the subskipgraph depth two from LL_uv that contains v.
         - Then the restructuring swaps LL'_u and LL_v.
-        (special cases require some care, i.e. a spine graph or when u and v are already in a len 2 LL)
+        (special cases require some care, i.e. a spine graph or when u and v are already in a len 2 LL.
+        in this case the only thing that is different is that we only go depth one from LL_uv)
 
         If not found, returns None.
         fromNode can either be of type int or of type LLNode.
@@ -37,7 +38,15 @@ class TreeSwapSkipGraph(SkipGraph):
 
         u = fromNode
         # swap subskipgraphs
+        if self.p >= random.uniform(0,1):
+            self.adjust(u, v, LL)
 
+        return v
+
+    def adjust(self, u, v, LL):
+        """
+        LL = LL_uv
+        """
         temp = LL.child_with_key(v.key)
         if temp is not None:
             LL_v = temp
@@ -53,9 +62,6 @@ class TreeSwapSkipGraph(SkipGraph):
                 LL_u_prime = temp
 
         self.tree_swap(LL_u_prime, LL_v, commonLL = LL)
-        return v
-
-
 
 
     def tree_swap(self, LL1, LL2, commonLL = None):
@@ -111,12 +117,29 @@ class TreeSwapSkipGraph(SkipGraph):
                     start.insert(node)
                 start = start.parent
 
-
-#S = generate_balanced_skipgraph(16, TreeSwapSkipGraph)
-S = TreeSwapSkipGraph()
-S.init_random(vals = list(range(16)))
-S.visualize("before.png")
-for req in g.uniform_demand_generator(15):
-    u,v = req[0], req[1]
-    S.search(v,u)
-S.visualize("after.png")
+# n = 32
+# #S = generate_balanced_skipgraph(16, TreeSwapSkipGraph)
+# S = generate_spine_skipgraph(n, TreeSwapSkipGraph)
+# # S = TreeSwapSkipGraph()
+# # S.init_random(vals = list(range(16)))
+#
+# def uniform(S, n):
+#     S.visualize("before.png")
+#     for req in g.uniform_demand_generator(n, samples = 10000):
+#         u,v = req[0], req[1]
+#         S.search(v,u)
+#     S.visualize("after.png")
+#
+# def two_cluster(S, n):
+#     S.visualize("before.png")
+#     for req in g.disjoint_demand_generator(n, 1 + n//2, samples = 10000):
+#         u,v = req[0], req[1]
+#         S.search(v,u)
+#     S.visualize("after.png")
+#
+# def repeated_source(S, n):
+#     S.visualize("before.png")
+#     for req in g.repeated_source_demand_generator(n, 0, samples = 10000):
+#         u,v = req[0], req[1]
+#         S.search(v,u)
+#     S.visualize("after.png")

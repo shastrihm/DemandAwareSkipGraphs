@@ -328,6 +328,12 @@ class SkipGraph:
 
         node.leafLL = startLL
 
+    def get_node(self, key):
+        """
+        gets the node associated with key. (Not a skip graph operation,
+        just for convenience/debugging purposes)
+        """
+        return self.level0.search(key, self.level0.head)
 
     def __str__(self):
         queue = [self.level0]
@@ -381,6 +387,14 @@ def generate_spine_skipgraph(n, constructor = SkipGraph):
         node = LLNode(i)
         node.set_memvec(mvecs[i])
         S.insert_from(S.level0, node, mvecs[i])
+    return S
+
+def generate_random_skipgraph(n, constructor = SkipGraph):
+    """
+    generates random skip graph on values in [0,...n-1]
+    """
+    S = constructor()
+    S.init_random(list(range(n)))
     return S
 
 if __name__ == "__main__":

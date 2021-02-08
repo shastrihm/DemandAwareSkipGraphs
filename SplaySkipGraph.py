@@ -295,13 +295,13 @@ class SplaySkipGraph(SkipGraph):
 # S.visualize("after.png")
 
 #S.visualize("before.png")
-for i in range(1000000):
-    S = SplaySkipGraph()
-    S.init_random(list(range(10)))
-    u,v = random.randint(0,9), random.randint(0,9)
-    print(u,v)
-    S.search(v,u)
-S.visualize("after.png")
+# for i in range(1000000):
+#     S = SplaySkipGraph()
+#     S.init_random(list(range(10)))
+#     u,v = random.randint(0,9), random.randint(0,9)
+#     print(u,v)
+#     S.search(v,u)
+# S.visualize("after.png")
 
 # S.visualize("before.png")
 # reqs = g.uniform_demand_generator(19, samples = 100)

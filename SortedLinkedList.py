@@ -294,7 +294,16 @@ class SortedLinkedList:
             return self.children[0]
         if key not in self.children[1]:
             return self.children[1]
-            
+
+    def search_cost(self, u,v):
+        """
+        returns cost of searching from u to v in self.
+        u and v are numeric key fields
+        """
+        L = [node.key for node in self.as_list()]
+        assert(u in L and v in L)
+        return abs(L.index(u) - L.index(v))
+
     def __len__(self):
         return self.len
 

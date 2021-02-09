@@ -7,15 +7,18 @@ import math
 
 class SkipGraph:
     def __init__(self):
+        self.online = False
+        self.data = {} # to collect numerics about performance
         self.level0 = SortedLinkedList(level = 0)
 
-    def search(self, key, fromNode = None, needLL = False):
+    def search(self, key, fromNode = None, needLL = False, offline = True):
         """
         returns node with key. Otherwise returns None
         fromNode: node to start search from. Must be a node that
                     belongs in the Skip Graph.
         neadLL : also returns the specific Linked List search path ends in if True,
                  otherwise just returns the node with the key
+        online : whether to collect data points during this search
         """
         if fromNode is None:
             fromNode = self.level0.head
@@ -23,6 +26,10 @@ class SkipGraph:
                 return None
 
         fromLL = fromNode.leafLL
+
+        if self.online and not offline:
+            data = self.search_cost(fromNode.key, key)
+            self.add_data(data, mode = "search_cost")
 
         while fromLL is not None:
             fromNode = fromLL.search(key, fromNode)
@@ -335,6 +342,43 @@ class SkipGraph:
         """
         return self.level0.search(key, self.level0.head)
 
+    def search_cost(self, u, v):
+        """
+        returns cost to search from u to v in skip graph (u and v are numeric keys)
+        search cost is the number of right/left pointers followed by the self.search
+        """
+        u_node = self.get_node(u)
+        fromLL = u_node.leafLL
+        cost = 0
+        while fromLL is not None:
+            old = u_node
+            u_node = fromLL.search(v, u_node)
+            cost += fromLL.search_cost(old.key, u_node.key)
+            if u_node.key == v:
+                return cost
+            fromLL = fromLL.parent
+            #cost += 1 #(model where downlinks are costly)
+        return cost
+
+    def start_data_collection(self):
+        self.online = True
+        self.data = {}
+
+    def stop_data_collection(self):
+        self.online = False
+
+    def spit_data(self, mode):
+        return self.data[mode].copy()
+
+    def add_data(self, data, mode):
+        """
+        adds data to database
+        """
+        if mode not in self.data:
+            self.data[mode] = [data]
+        else:
+            self.data[mode].append(data)
+
     def __str__(self):
         queue = [self.level0]
         d = {}
@@ -364,6 +408,7 @@ def generate_balanced_skipgraph(n, constructor = SkipGraph):
     """
     n is a power of 2. generates a skip graph that is completely balanced (all leaf nodes are same height)
     """
+
     l = int(math.log(n,2)) - 3
     mvecs = [[0,0,0],[1,0,0], [0,1,0], [1,1,0],[0,0,1], [0,1,1], [1,0,1], [1,1,1]]
     while l > 0:

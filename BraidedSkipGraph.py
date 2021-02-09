@@ -27,7 +27,7 @@ class BraidedSkipGraph(TreeSwapSkipGraph):
                 print("supplied fromNode is not in skip graph")
                 return
 
-        v, LL = SkipGraph.search(self, key, fromNode = fromNode, needLL = True)
+        v, LL = SkipGraph.search(self, key, fromNode = fromNode, needLL = True, offline = False)
         if v is None:
             return None
 
@@ -46,5 +46,5 @@ class BraidedSkipGraph(TreeSwapSkipGraph):
             return
         else:
             super().adjust(u,v,LL)
-            v, LL =  SkipGraph.search(self, v.key, fromNode = u, needLL = True)
+            v, LL =  SkipGraph.search(self, v.key, fromNode = u, needLL = True, offline = True)
             self.adjust(u,v, LL)

@@ -28,7 +28,7 @@ class AdaptiveSkipGraphV1(SkipGraph):
         needLL doesn't do anything. Just for inheritance and driver purposes
         """
         if isinstance(fromNode, int):
-            fromNode = super().search(fromNode, self.level0.head, needLL = False)
+            fromNode = self.get_node(fromNode)
 
         v, LL = super().search(key, fromNode, needLL = True)
         if v is None:
@@ -40,7 +40,7 @@ class AdaptiveSkipGraphV1(SkipGraph):
 
         ### This lazier implementation is much less complicated and has
         #### the exact same desired effect, moving the two nodes together
-        ### in a len 2 LL. 
+        ### in a len 2 LL.
         self.delete(move)
         move.reset()
         move.set_memvec(stay.get_memvec())

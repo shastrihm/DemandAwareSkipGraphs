@@ -27,7 +27,7 @@ class TreeSwapSkipGraph(SkipGraph):
         fromNode can either be of type int or of type LLNode.
         """
         if isinstance(fromNode, int):
-            fromNode = super().search(fromNode, self.level0.head, needLL = False)
+            fromNode = self.get_node(fromNode)
             if fromNode is None:
                 print("supplied fromNode is not in skip graph")
                 return

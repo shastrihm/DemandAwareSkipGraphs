@@ -17,8 +17,7 @@ class ProbDemoteSkipGraph(AdaptiveSkipGraphV1):
         needLL doesn't do anything. Just for inheritance and driver purposes
         """
         if isinstance(fromNode, int):
-            fromNode = SkipGraph.search(self, key = fromNode, fromNode = self.level0.head, needLL = False)
-
+            fromNode = self.get_node(fromNode)
         outcast = None
         if len(fromNode.leafLL.parent) == 2:
             l = fromNode.leafLL.parent

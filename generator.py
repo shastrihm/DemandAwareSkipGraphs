@@ -38,6 +38,19 @@ def uniform_demand_generator(n, samples = 1000):
         requests.append((u,v))
     return requests
 
+def repeated_source_constrained_demand_generator(n, source, demand, samples = 1000):
+    """
+    Returns sequence of request where source node is the only one initiating
+    searches for set of keys in demand
+    """
+    requests = []
+    for i in range(samples):
+        u = source
+        v = random.choice(demand)
+        while v == u:
+            v = random.choice(demand)
+        requests.append((u,v))
+    return requests
 
 def repeated_source_demand_generator(n, source, samples= 1000):
     """
@@ -69,7 +82,7 @@ def competing_source_demand_generator(source_pool, dest_pool, samples = 1000):
     requests = []
     for i in range(samples):
         u = random.choice(source_pool)
-        v = random.choice(pool)
+        v = random.choice(dest_pool)
         requests.append((u,v))
     return requests
 

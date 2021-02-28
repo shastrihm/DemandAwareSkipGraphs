@@ -20,12 +20,13 @@ class AdaptiveSkipGraphV1(SkipGraph):
         SkipGraph.__init__(self)
         self.LRU = {}
 
-    def search(self, key, fromNode = None, needLL = True):
+    def search(self, key, fromNode = None, needLL = True, giveLL = False):
         """
         Returns the node with the associated key if found, otherwise None.
         Performs adjustment if found.
 
         needLL doesn't do anything. Just for inheritance and driver purposes
+        giveLL = True returns (v,LL_uv), the lowest common linked list between u and v, instead of just v
         """
         if isinstance(fromNode, int):
             fromNode = self.get_node(fromNode)
@@ -36,7 +37,7 @@ class AdaptiveSkipGraphV1(SkipGraph):
 
         u = self.level0.head if fromNode is None else fromNode
 
-        move, stay = self.__policy(u,v)
+        move, stay = v, u #self.__policy(u,v)
 
         ### This lazier implementation is much less complicated and has
         #### the exact same desired effect, moving the two nodes together
@@ -46,6 +47,8 @@ class AdaptiveSkipGraphV1(SkipGraph):
         move.set_memvec(stay.get_memvec())
         self.insert(move)
 
+        if giveLL:
+            return (v,LL)
         return v
 
     def __policy(self, u, v):

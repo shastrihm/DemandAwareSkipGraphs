@@ -18,7 +18,7 @@ class SkipGraph:
                     belongs in the Skip Graph.
         neadLL : also returns the specific Linked List search path ends in if True,
                  otherwise just returns the node with the key
-        online : whether to collect data points during this search
+        offline : whether to collect data points during this search
         """
         if fromNode is None:
             fromNode = self.level0.head
@@ -141,9 +141,38 @@ class SkipGraph:
         self.__height_decrementer_helper(LL.children[0])
         self.__height_decrementer_helper(LL.children[1])
 
+    def visualize_as_bird(self, path):
+        """
+        Creates png of skip graph as a birds eye view
+        of the actual graph
+        , saves it to path (where path includes
+        filename.png)
+        """
+        graph = pydot.Dot(rankdir = "BT", fontsize = "15")
+        edges = {}
+        for node in self.level0:
+            n = pydot.Node(str(node.key), shape = "circle")
+            for neighb in node.neighbors_as_list():
+                lev = neighb[0]
+                neighb = neighb[1]
+                tup = tuple(sorted((neighb, node.key)))
+                if tup not in edges or lev > edges[tup][0]:
+                    n2 = pydot.Node(str(neighb), shape = "circle")
+                    graph.add_node(n2)
+                    edge = pydot.Edge(n, n2, label = str(lev), arrowhead = "None")
+                    edges[tup] = [lev, edge]
+
+        for edge in edges:
+            edge = edges[edge][1]
+            graph.add_edge(edge)
+
+        graph.write_png(path)
+        return graph
+
     def visualize(self, path):
         """
-        Creates png of skip graph, saves it to path (where path includes
+        Creates png of skip graph as a prefix tree
+        , saves it to path (where path includes
         filename.png)
         """
 
@@ -345,7 +374,7 @@ class SkipGraph:
     def search_cost(self, u, v):
         """
         returns cost to search from u to v in skip graph (u and v are numeric keys)
-        search cost is the number of right/left pointers followed by the self.search
+        search cost is the number of right/left links followed by the self.search
         """
         u_node = self.get_node(u)
         fromLL = u_node.leafLL
@@ -357,8 +386,22 @@ class SkipGraph:
             if u_node.key == v:
                 return cost
             fromLL = fromLL.parent
-            #cost += 1 #(model where downlinks are costly)
+            #cost += 1
         return cost
+
+    def expected_path_length(self, D):
+        """
+        D : a dictionary mapping V x V --> N, where
+        D[(u,v)] is the weight (or frequency) with which u initiates a request of v.
+        This function computes \sum_{V x V}search_cost(u,v)*D[(u,v)]
+        """
+        dsum = sum(D.values())
+        s = 0
+        for k in D:
+            u,v = k[0], k[1]
+            if D[k] > 0:
+                s += (D[k]/dsum)*self.search_cost(u,v)
+        return s
 
     def start_data_collection(self):
         self.online = True
@@ -368,6 +411,9 @@ class SkipGraph:
         self.online = False
 
     def spit_data(self, mode):
+        if mode not in self.data:
+            print(mode + " not in data dict.")
+            return
         return self.data[mode].copy()
 
     def add_data(self, data, mode):
@@ -442,5 +488,33 @@ def generate_random_skipgraph(n, constructor = SkipGraph):
     S.init_random(list(range(n)))
     return S
 
+def generate_random_seeded_skipgraph(n, seed, constructor = SkipGraph):
+    """
+    generates random skip graph on values in [0,...n-1].
+    Seed determines the random seed. So you can keep the seed constant
+    and vary the constructor to get identical skip graphs across different
+    self-adjusting algorithms.
+    """
+    random.seed(seed)
+    S = constructor()
+    for i in range(n):
+        node = LLNode(i)
+        memvec = [random.choice([0,1]) for k in range(n)]
+        node.set_memvec(memvec)
+        S.insert(node)
+    return S
+
+
+def generate_identical_random_skipgraphs(n, seed, constructors):
+    """
+    Given a random seed, and a list of constructors, returns a list
+    of skip graphs that are all copies of each other but identical in structure.
+    """
+    return [generate_random_seeded_skipgraph(n, seed, const) for const in constructors]
+
+
 if __name__ == "__main__":
-    S = generate_spine_skipgraph(8, constructor = SkipGraph).visualize("before.png")
+    S1 = generate_random_seeded_skipgraph(12, 81)
+    S2 = generate_random_seeded_skipgraph(12, 81)
+    S1.visualize("before.png")
+    S2.visualize("after.png")

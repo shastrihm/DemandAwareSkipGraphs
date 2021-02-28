@@ -47,6 +47,8 @@ class TreeSwapSkipGraph(SkipGraph):
         """
         LL = LL_uv
         """
+        if u == v:
+            return #u == v
         temp = LL.child_with_key(v.key)
         if temp is not None:
             LL_v = temp

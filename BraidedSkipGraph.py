@@ -33,8 +33,7 @@ class BraidedSkipGraph(TreeSwapSkipGraph):
 
         u = fromNode
         # swap subskipgraphs
-        if self.p >= random.uniform(0,1):
-            self.adjust(u, v, LL)
+        self.adjust(u, v, LL)
 
         return v
 
@@ -42,6 +41,8 @@ class BraidedSkipGraph(TreeSwapSkipGraph):
         """
         LL = LL_uv
         """
+        if self.p < random.uniform(0,1): # only recurse partway if coin flip fails
+            return
         if u.leafLL.parent is v.leafLL.parent:
             return
         else:

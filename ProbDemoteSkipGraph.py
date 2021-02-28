@@ -12,10 +12,17 @@ class ProbDemoteSkipGraph(AdaptiveSkipGraphV1):
     def search(self, key, fromNode = None, needLL = True):
         """
         Returns the node with the associated key if found, otherwise None.
-        Performs adjustment if found.
+        Performs adjustment if found. Adjustment just moves v to u, where u searched for v,
+        such that u and v are in a len 2 LL. Node w is demoted one level down and inserted
+        randomly into the other subtree, where w was u's previous neighbor.
 
         needLL doesn't do anything. Just for inheritance and driver purposes
         """
+        if len(self.level0) == 0:
+            print("SG is empty")
+            return
+        if fromNode is None:
+            fromNode = self.level0.head
         if isinstance(fromNode, int):
             fromNode = self.get_node(fromNode)
         outcast = None

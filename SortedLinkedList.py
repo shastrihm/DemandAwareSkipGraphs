@@ -66,10 +66,22 @@ class LLNode:
                 y = self.neighbors[lev][1].key
             print(lev, " [", x, y, "]")
 
+    def neighbors_as_list(self):
+        L = []
+        for k in self.neighbors:
+            l = self.neighbors[k]
+            if l[0] is not None:
+                L.append((k,l[0].key))
+            if l[1] is not None:
+                L.append((k,l[1].key))
+        return L
+
     def reset(self):
         self.neighbors = {}
         self.leafLL = None
         self.memvec = []
+
+
 
 
 def shift_neighbors(neighbors, startLevel, inc):

@@ -1,0 +1,27 @@
+example after definitions
+
+- route path in skip graph search algorithm is not always the
+  shortest path
+    - counterexample
+    - counterexample to the rebuttal of the
+      counterexample: obvious modification to search algorithm (move to node thats "closest" to target)
+      isn't always better either
+
+- average (expected) path length. Formally define and motivate (https://en.wikipedia.org/wiki/Average_path_length)
+
+
+- chapter on NP completeness
+    - formulate as decision problems
+      - skip graph with shortest path routes vs skip graph with actual routes
+        - minimum expected path length problem (mepl - sg)
+        - static optimal skip graph problem (sosg)
+    - result from paper that proves NPC for grids and any distribution
+    - maybe result from paper that proves NPC for minimum linear arrangement and any distribution
+    - NPC result for skip graph with shortest path routes MEPL
+        - reduction is identity function
+            - because we can make a skip graph isomorphic to grid
+            - alternative reduction is to make a skip graph isomorphic to a line?
+
+    - NPC for SOSG, for shortest path, open question (cite https://arxiv.org/pdf/1807.02935.pdf related work section)
+    - optimal substructure not true in finding static optimal skip graph, so no obvious DP alg
+    - conjecture that its true for actual skip graph routes (b/c its at elast as hard)

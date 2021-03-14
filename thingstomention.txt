@@ -7,6 +7,9 @@ example after definitions
       counterexample: obvious modification to search algorithm (move to node thats "closest" to target)
       isn't always better either
 
+- skip graph route costs are assymetric: i.e. route(u,v) != route(v,u)
+  - example
+
 - average (expected) path length. Formally define and motivate (https://en.wikipedia.org/wiki/Average_path_length)
 
 
@@ -16,12 +19,48 @@ example after definitions
         - minimum expected path length problem (mepl - sg)
         - static optimal skip graph problem (sosg)
     - result from paper that proves NPC for grids and any distribution
-    - maybe result from paper that proves NPC for minimum linear arrangement and any distribution
-    - NPC result for skip graph with shortest path routes MEPL
-        - reduction is identity function
-            - because we can make a skip graph isomorphic to grid
-            - alternative reduction is to make a skip graph isomorphic to a line?
+    - result from paper that proves NPC for minimum linear arrangement (MinLA) and any distribution (input unweighted, directed graph)
+        - http://archiv.ub.uni-heidelberg.de/volltextserver/10578/1/MinLA_Thesis_Seitz.pdf
+        - above source mentions NPC for case where input graph is weighted and undirected, but
+          directed case is also NPC by a trivial reduction
+    - NPC result that shows its NPC to
+      find MEPL embedding for a given skip graph topology
+      when route costs is either shortest path or actual skip graph search cost
+        - reduction is identity function or something similar
+            - because we can make a skip graph isomorphic to line
+            - alternative reduction is to make a skip graph isomorphic to a grid and use other paper
+    - Special cases of MinLA that are still NPC (bipartite graphs) can be extended to request distributions that are bipartite and uniform
+    - special case of MEPL - SG = MEPL - BalancedSG is also NP-complete (min cost embedding for Sgs of height log n)
+    - cobjecture NPC for SOSG, for shortest path AND skip graph route cost, open question (cite https://arxiv.org/pdf/1807.02935.pdf related work section)
 
-    - NPC for SOSG, for shortest path, open question (cite https://arxiv.org/pdf/1807.02935.pdf related work section)
-    - optimal substructure not true in finding static optimal skip graph, so no obvious DP alg
-    - conjecture that its true for actual skip graph routes (b/c its at elast as hard)
+
+- static optimal skip graph given any distribution can be found with dynamic programming.
+  - however the running time is exponential in the input. (exponential number of subproblems)
+  - improvement over brute force, which is factorial, at least
+- but can find static optimal skip graph given uniform distribution (i.e. skip graph with minimum average path length)
+  - description of construction, intuition (maximizes  connectivity of graph)
+  - shortest path between any 2 nodes is = to skip graph routing path (theorem)
+  - recurrence relation, closed form for expected path length
+  - proof of optimality (among balanced skip graphs, conjectured among all skip graphs)
+    - among balanced SGs proof: our construction achieves minimal sum increment at each partitioning/promotion step
+- can extend to any distribution that describes clustering behavior (clusters of size a power of 2
+   and uniform distribution within clusters)
+
+
+
+
+3/10 meeting
+- implement static optimal DP alg, see what best SG is for small n,
+    - maybe that will inspire fast alg for finding static optimal SG
+
+- consider LL_u,v, recompute subskipgraph rooted at LL_u,v based on
+  subdemand graph (modify demand graph to respect linked list routing,
+                  like deleting edges between nodes that are already
+                  one hop away in LL_u,v, and maybe multiply demand edges
+                  by their pointer distance in LL_u,v, then do the "matching"
+                  or some other graph algorithm)
+
+- above alg but by iteratively "collapsing" the modified demand graph
+
+- naive self adjusting strat that respects linked list routing:
+    - braid and weave

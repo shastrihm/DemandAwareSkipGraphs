@@ -141,6 +141,23 @@ class SkipGraph:
         self.__height_decrementer_helper(LL.children[0])
         self.__height_decrementer_helper(LL.children[1])
 
+
+    def promote(self, node, fromLL, b):
+        """
+        Promotes node to b-subgraph. This method is meant to
+        be for manually generating skip graphs of a certain
+        structure.
+        """
+        if fromLL.children[b] is None:
+            newL = SortedLinkedList(level = fromLL.level + 1)
+            fromLL.children[b] = newL
+            newL.parent = fromLL
+        else:
+            newL = fromLL.children[b]
+        newL.insert(node)
+        if len(newL) == 1:
+            node.leafLL = newL
+
     def visualize_as_bird(self, path):
         """
         Creates png of skip graph as a birds eye view
@@ -376,6 +393,8 @@ class SkipGraph:
         returns cost to search from u to v in skip graph (u and v are numeric keys)
         search cost is the number of right/left links followed by the self.search
         """
+        if u == v:
+            return 0
         u_node = self.get_node(u)
         fromLL = u_node.leafLL
         cost = 0
@@ -401,6 +420,21 @@ class SkipGraph:
             u,v = k[0], k[1]
             if D[k] > 0:
                 s += (D[k]/dsum)*self.search_cost(u,v)
+        return s
+
+
+    def all_pairs_route_costs(self):
+        """
+        prints the routing costs (number of links) between all pairs.
+        returns the sum total of all the route costs
+        """
+        n = len(self.level0)
+        s = 0
+        for i in range(n):
+            for j in range(n):
+                cost = self.search_cost(i,j)
+                s+= cost
+                print(str(i) + " " + str(j) + ": " + str(cost))
         return s
 
     def start_data_collection(self):
@@ -480,6 +514,37 @@ def generate_spine_skipgraph(n, constructor = SkipGraph):
         S.insert_from(S.level0, node, mvecs[i])
     return S
 
+
+def generate_alternating_skipgraph(n, constructor = SkipGraph):
+    """
+    n is a power of 2. Generates a skip graph such that at each
+    level, every other node is promoted to the 1 subgraph (and thus
+    every alternating node is promoted to the 0 subgraph).
+    Ensures that every node is adjacent to different nodes in every level.
+    Conjectured to be the static optimal skip graph for uniform distributino
+    """
+    S = constructor()
+    for i in range(0,n):
+        node = LLNode(i)
+        S.level0.insert(node)
+
+    def helper(S, fromLL):
+        if len(fromLL) == 1:
+            return
+        i = 0
+        for node in fromLL:
+            if i % 2 == 0:
+                S.promote(node, fromLL, 0)
+            else:
+                S.promote(node, fromLL, 1)
+            i += 1
+        helper(S, fromLL.children[0])
+        helper(S, fromLL.children[1])
+
+    helper(S, S.level0)
+    S.update_memvecs()
+    return S
+
 def generate_random_skipgraph(n, constructor = SkipGraph):
     """
     generates random skip graph on values in [0,...n-1]
@@ -505,12 +570,15 @@ def generate_random_seeded_skipgraph(n, seed, constructor = SkipGraph):
     return S
 
 
+
 def generate_identical_random_skipgraphs(n, seed, constructors):
     """
     Given a random seed, and a list of constructors, returns a list
     of skip graphs that are all copies of each other but identical in structure.
     """
     return [generate_random_seeded_skipgraph(n, seed, const) for const in constructors]
+
+
 
 
 if __name__ == "__main__":

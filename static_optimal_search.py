@@ -1,188 +1,195 @@
-from itertools import permutations,product,combinations
+import itertools
 import math
 import random
+import bisect
+import generator as g
+import pydot
+
+def find_le(a, x):
+    'Find rightmost value less than or equal to x'
+    i = bisect.bisect_right(a, x)
+    if i:
+        return a[i-1]
+    raise ValueError
+
+def find_ge(a, x):
+    'Find leftmost item greater than or equal to x'
+    i = bisect.bisect_left(a, x)
+    if i != len(a):
+        return a[i]
+    raise ValueError
+
+def all_SGs_rooted_at(subset, C):
+    """
+    computes all skip graphs rooted at subset and puts
+    them all in C
+    """
+    C[subset] = []
+    if len(subset) == 1:
+        C[subset] = [[subset]]
+        return
+    for subsubset in list(powerset(subset)):
+        if len(subsubset) > 0 and len(subsubset) <= len(subset)//2:
+        #if len(subsubset) == len(subset)//2:
+            othersubsubset = tuple(sorted(tuple(set(subset) - set(subsubset))))
+            for left_sgs in C[subsubset]:
+                for right_sgs in C[othersubsubset]:
+                    left_sgs = list(left_sgs)
+                    right_sgs= list(right_sgs)
+                    new = [subset] + left_sgs + right_sgs
+                    C[subset].append(tuple(new))
 
 
 
 
-def minimum_bisection(node_set, req_dist):
-    best_bisect_cost = math.inf
-    best_partition = None
-    for comb in combinations(node_set, len(node_set)//2):
-        other = tuple(set(node_set) - set(comb))
+def all_SGs_on(V):
+    """
+    Returns all skip graphs on node set V, represented as a list of subsets
+    """
+    C = {}
+    for subset in list(powerset(V)): # in order of length
+        all_SGs_rooted_at(subset, C)
+    return C[tuple(V)]
 
-        bisect_cost = 0
-        for node in node_set:
-            if node in comb:
-                for o_node in other:
-                    bisect_cost += req_dist[(node, o_node)]*partition_cost(node,o_node,[comb,other])
-                    bisect_cost += req_dist[(o_node, node)]*partition_cost(o_node,node,[other,comb])
-        if bisect_cost < best_bisect_cost:
-            best_bisect_cost = bisect_cost
-            best_partition = [comb, other]
 
-    return best_partition
+def SL_restriction(SG,u):
+    """
+    returns the skip list restriction of node u in skip graph SG
+    """
+    SL = []
+    for tup in SG:
+        if u in tup:
+            SL.append(tup)
+    SL.sort(key = len)
+    return SL
 
-def partition_cost(u,v,partition):
+def SL_search_cost(SL, u, v):
+    """
+    computes cost for u to search v in Skip list restriction of u, when SL is a
+    tuple of tuples sorted by increasing length
+    """
+    if u == v:
+        return 0
     if u < v:
-        cmp1 = lambda i, u : i > u
-        cmp2 = lambda i, v : i <= v
+        find = find_le
     else:
-        cmp1 = lambda i, u : i < u
-        cmp2 = lambda i, v : i >= v
+        find = find_ge
 
-    u_list, v_list = partition
-    c = 0
-    m = u
-    for i in u_list:
-        if cmp1(i,u):
-            if cmp2(i,v):
-                c += 1
-                m = i
-            else:
-                break
-    for j in v_list:
-        if cmp1(j,m):
-            if cmp2(j,v):
-                c += 1
-    return c
-
-def greedy_bisect(node_set, req_dist, mapping= None):
-    if mapping is None:
-        mapping = {i : '' for i in node_set}
-    if len(node_set) == 1:
-        return node_set
-    left, right = minimum_bisection(node_set, req_dist)
-    for i in mapping:
-        if i in left:
-            mapping[i] += '0'
-        elif i in right:
-            mapping[i] += '1'
-    greedy_bisect(left, req_dist, mapping)
-    greedy_bisect(right, req_dist, mapping)
-    return mapping
-
-def permify_map(mapping):
-    perm = []
-    for i in mapping:
-        perm.insert(i, int(mapping[i],2))
-    return tuple(perm)
+    curr = u
+    cost = 0
+    for tup in SL:
+        next = find(tup, v)
+        cost += abs(tup.index(curr) - tup.index(next))
+        if next == v:
+            return cost
+        curr = next
+    return cost
 
 
-def longestCommonPrefix(strs):
+def epl_SG(SG,D):
     """
-    Longest common prefix among all strings in list strs
+    computes expected path length of SG given demand dict D
     """
-    if not strs: return ""
-    for i in range(len(strs[0])):
-        char = strs[0][i]
-        for j in range(1,len(strs)):
-            if i == len(strs[j]) or strs[j][i] != char:
-                return strs[0][:i]
-    return strs[0]
-
-def get_mvec(i, perm):
-    """
-    This can be sped up by using anything other than strings
-    """
-    m = bin(perm.index(i))[2:]
-    m = ('0'*(int(math.log(len(perm),2))-len(m))) + m
-    return m
-
-def cost(perm ,u,v, vecs, l_uv):
-    """
-    Computes cost to search from u to v
-    """
-    if u < v:
-        comp1 = lambda x, u, v: u < x and x < v
-        fn = max
-        comp2 = lambda x, m, v : m < x and x <= v
-        m = -math.inf
-    else:
-        comp1 = lambda x, u, v : u > x and x > v
-        fn = min
-        comp2 = lambda x, m, v : m > x and x >= v
-        m = math.inf
-
-    c = 0
-    for x in perm:
-        first = vecs[x][: l_uv + 1] == vecs[u][: l_uv + 1]
-        second = comp1(x, u, v)
-        if first and second:
-            c += 1
-            m = fn(m, x)
-    c = 0
-    for x in perm:
-        first = vecs[x][: l_uv + 1] == vecs[v][: l_uv + 1]
-        second = comp2(x, m, v)
-        c += int(first and second)
-    return c
+    aggregate = 0
+    for k in D:
+        u,v = k[0], k[1]
+        if D[k] > 0:
+            SL = SL_restriction(SG, u)
+            aggregate += D[k]*SL_search_cost(SL, u, v)
+    return aggregate
 
 
-def expected_search_time(perm, req_map):
+def min_epl_SG(D):
     """
-    Computes expected search time for skip graph determined by perm among all possible requests,
-    where the distribution of requests is given by req_map
+    Returns the skip graph on n nodes with minimal expected path length
+    given demand D
     """
-    mvec_map = {i : get_mvec(i,perm) for i in perm}
-    total = 0
-    for req in req_map:
-        u,v = req
-        l_uv = len(longestCommonPrefix([mvec_map[u],mvec_map[v]]))
-        cost_uv = cost(perm, u, v, mvec_map, l_uv)
-        total += req_map[(u,v)]*cost_uv
-    return total
+    n = int(math.sqrt(len(D)))
+    print("generating all skip graphs...")
+    SGs = all_SGs_on(list(range(0,n)))
 
-def driver(N, req_dist):
-    """
-    exhaustive search for skip graph with minimal expected search time
-    I.e. find the optimal bijection between {0,...,2^N - 1} and {0,1}^log(N,2)
-    ​
-    N is a power of 2
-    req_dist is a dictionary of weights on N \times N (the set of requests)
-    """
-    # make sure N a power of 2 (the number of nodes)
-    assert(N == 0 or (N & (N - 1)) == 0)
-    # a Permutation P on N represents a skip graph: for each p_i in P, p_i is
-    # the node with membership vector bin(i) where bin(i) is the binary
-    # representation of i
-    perms = permutations(list(range(N)))
+    min_cost = math.inf
+    best_so_far = None
 
-    best_cost = math.inf
-    best_graph = None
+    print("starting search...")
     i = 0
-    for perm in perms:
-        c = expected_search_time(perm, req_dist)
-        if c < best_cost:
-            best_cost = c
-            best_graph = perm
-        if i % 1000 == 0:
-            pass
-            #print("searched ", i, " perms")
-        i+=1
-    return (best_graph, best_cost)
+    for SG in SGs:
+        cost = epl_SG(SG, D)
+        if cost < min_cost:
+            min_cost = cost
+            best_so_far = SG
+        i += 1
+        if i % 10000 == 0:
+            print(i)
 
-#### Usage ####
-N = 4
-r = {(u,v): N - abs(u-v) for u,v in [(a,b) for a in list(range(N)) for b in list(range(N))]}
-# best_graph, best_cost = driver(N, r)
+    print(min_cost)
+    return best_so_far
 
-r = {(u,v): random.randint(0,2) for u,v in [(a,b) for a in list(range(N)) for b in list(range(N))]}
-best_graph, best_cost = driver(N, r)
-node_set = list(range(0,N))
-check = permify_map(greedy_bisect(tuple(node_set), r))
-if check != best_graph:
-    t = expected_search_time(check, r)
-    if expected_search_time(check, r) != best_cost:
-        print(check, t, best_graph, best_cost)
+def powerset(iterable):
+    "list(powerset([1,2,3])) --> [(), (1,), (2,), (3,), (1,2), (1,3), (2,3), (1,2,3)]"
+    s = list(iterable)
+    return itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(len(s)+1))
 
-def test(N):
-    for i in range(100):
-        r = {(u,v): random.randint(0,10) for u,v in [(a,b) for a in list(range(N)) for b in list(range(N))]}
-        best_graph, best_cost = driver(N, r)
-        node_set = list(range(0,N))
-        check = permify_map(greedy_bisect(tuple(node_set), r))
-        if check != best_graph:
-            if expected_search_time(check, r) != best_cost:
-                print(check, best_graph)
-        print(i)
+def visualize_demand(D, path):
+    """
+    Given demand dict D and SG in nested tuple form (sorted in order
+    of decreasing length),
+    visualize them as png
+    """
+    graph = pydot.Dot(fontsize = "15")
+    for k in D:
+        u,v = k[0], k[1]
+        if D[k] > 0 and abs(u-v) > 1:
+            nodeu = pydot.Node(str(u) + ".", shape = "circle")
+            nodev = pydot.Node(str(v) + ".", shape = "circle")
+            edge = pydot.Edge(nodeu, nodev, label = str(D[k]))
+            graph.add_node(nodeu)
+            graph.add_node(nodev)
+            graph.add_edge(edge)
+    graph.write_png(path)
+    return graph
+
+def visualize_tupled_SG(SG, path):
+    """
+    SG is a tuple-ized SG sorted in increasing order
+    """
+    graph = pydot.Dot(rankdir = "TB", fontsize = "15")
+    # SG[0] should be level 0
+    covered = []
+    for u in SG[0]:
+        SL = SL_restriction(SG, u)
+        curr = SL[0]
+        for lev in SL[1:]:
+            if len(curr) == 1:
+                shape = "circle"
+            else:
+                shape = "box"
+            node1 = pydot.Node(str(curr), shape = shape)
+            if len(lev) == 1:
+                shape = "circle"
+            else:
+                shape = "box"
+            node2 = pydot.Node(str(lev), shape = shape)
+            edge = pydot.Edge(node1, node2, arrowhead = "None")
+
+            if set([curr, lev]) not in covered:
+                graph.add_node(node1)
+                graph.add_node(node2)
+                graph.add_edge(edge)
+
+                covered.append(set([curr, lev]))
+            curr = lev
+    graph.write_png(path)
+    return graph
+
+
+
+
+
+
+if __name__ == "__main__":
+    n = 4
+    D = g.random_demand_dict(n, range = 10)
+    visualize_demand(D, "opt_demand.png")
+    sg = min_epl_SG(D)
+    visualize_tupled_SG(sg, "opt_sg.png")

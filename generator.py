@@ -114,6 +114,15 @@ def uniform_demand_dict(n):
         D[k] = 1
     return D
 
+def random_demand_dict(n, range = 10):
+    """
+    randomly assign weights to pairs, from random.randint(0,range)
+    """
+    D = init_dict(n)
+    for k in D:
+        D[k] = random.randint(0,range)
+    return D
+
 def two_cluster_demand_dict(n, thresh1, thresh2):
     """
     nodes 0 to thresh1 have (u,v) = 1, nodes thresh2 to n have (u,v) = 1,

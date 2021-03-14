@@ -10,7 +10,7 @@ import operator
 import generator as g
 from matplotlib import pyplot as plt
 from SkipGraph import SkipGraph
-from SkipGraph import generate_spine_skipgraph, generate_balanced_skipgraph, generate_random_skipgraph, generate_identical_random_skipgraphs
+from SkipGraph import generate_spine_skipgraph, generate_balanced_skipgraph, generate_random_skipgraph, generate_identical_random_skipgraphs, generate_alternating_skipgraph
 from AdaptiveSkipGraph_v1 import AdaptiveSkipGraphV1
 from ProbDemoteSkipGraph import ProbDemoteSkipGraph
 from SplaySkipGraph import SplaySkipGraph # this one is bugged
@@ -116,9 +116,10 @@ def epl_best(D, n, samples = 1000):
         epl = S.expected_path_length(D)
         if epl < m:
             best = S
-        if i % 10 == 0:
-            print(str(i) + " done")
-    return S
+            m = epl
+        # if i % 100 == 0:
+        #     print(str(i) + " done")
+    return (S, m)
 
 
 
@@ -218,14 +219,19 @@ def compare_all(SGs, D):
     plt.legend(loc = "upper left")
 
 #data = epl_EXPERIMENT(S, D, samples = 1000, visualize = True)
-compare_all(SGs, D)
+#compare_all(SGs, D)
 #plt.show()
 
+def Z(k):
+    if k == 2:
+        return 4
+    prev = Z(k-1)
+    return prev + prev + 2**(k-1)
 
+def test(k):
+    if k == 2:
+        return 14
+    prev = test(k-1)
+    return 4*prev + 2**(2*k-1) - 2*Z(k - 1)
 
-# ToDo:
-# think about accounting for within linked list routing
-# cliques within cliques (within each cluster, nodes form a stronger cluster)
-# scaling? maybe if n = 2^(2k) is number of nodes, then break into sqrt(n) number of clusters and then
-# plot? Maybe the scaling makes it so the noise associated with within-linked list routing is less prevalent,
-# meaning a more meaningful picture of the cost associated with the tree-distance
+S = lambda k : (2**(k-1))*(((2**k)*(k-1)) + k + 1)

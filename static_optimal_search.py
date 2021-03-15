@@ -5,11 +5,13 @@ import bisect
 import generator as g
 import pydot
 
+
 def find_le(a, x):
     'Find rightmost value less than or equal to x'
     i = bisect.bisect_right(a, x)
     if i:
         return a[i-1]
+    print(a,x)
     raise ValueError
 
 def find_ge(a, x):
@@ -17,6 +19,7 @@ def find_ge(a, x):
     i = bisect.bisect_left(a, x)
     if i != len(a):
         return a[i]
+    print(a, x)
     raise ValueError
 
 def all_SGs_rooted_at(subset, C):
@@ -40,7 +43,11 @@ def all_SGs_rooted_at(subset, C):
                     C[subset].append(tuple(new))
 
 
-
+def SG_nodes(SG):
+    """
+    returns nodes in SG, as tuple of ints
+    """
+    return max(SG, key = len)
 
 def all_SGs_on(V):
     """
@@ -63,7 +70,7 @@ def SL_restriction(SG,u):
     SL.sort(key = len)
     return SL
 
-def SL_search_cost(SL, u, v):
+def SL_search_cost(SL, u, v, return_value = False):
     """
     computes cost for u to search v in Skip list restriction of u, when SL is a
     tuple of tuples sorted by increasing length
@@ -81,10 +88,21 @@ def SL_search_cost(SL, u, v):
         next = find(tup, v)
         cost += abs(tup.index(curr) - tup.index(next))
         if next == v:
+            curr = next
+            if return_value:
+                return (cost, curr)
             return cost
         curr = next
+    if return_value:
+        return (cost, curr)
     return cost
 
+def SG_search_cost(SG, u,v, return_value = False):
+    """
+    computes cost to search from u to v in skip graph SG
+    """
+    uSL = SL_restriction(SG, u)
+    return SL_search_cost(uSL, u, v, return_value)
 
 def epl_SG(SG,D):
     """
@@ -94,8 +112,7 @@ def epl_SG(SG,D):
     for k in D:
         u,v = k[0], k[1]
         if D[k] > 0:
-            SL = SL_restriction(SG, u)
-            aggregate += D[k]*SL_search_cost(SL, u, v)
+            aggregate += D[k]*SG_search_cost(SG, u, v)
     return aggregate
 
 
@@ -187,9 +204,12 @@ def visualize_tupled_SG(SG, path):
 
 
 
+
+
+
 if __name__ == "__main__":
-    n = 4
-    D = g.random_demand_dict(n, range = 10)
+    n = 6
+    D = g.random_demand_dict(n)
     visualize_demand(D, "opt_demand.png")
     sg = min_epl_SG(D)
     visualize_tupled_SG(sg, "opt_sg.png")

@@ -3,7 +3,25 @@ import random
 import os
 import itertools
 import pydot
+import bisect
 import math
+
+
+def find_le(a, x):
+    'Find rightmost value less than or equal to x'
+    i = bisect.bisect_right(a, x)
+    if i:
+        return a[i-1]
+    print(a,x)
+    raise ValueError
+
+def find_ge(a, x):
+    'Find leftmost item greater than or equal to x'
+    i = bisect.bisect_left(a, x)
+    if i != len(a):
+        return a[i]
+    print(a, x)
+    raise ValueError
 
 class SkipGraph:
     def __init__(self):
@@ -423,19 +441,116 @@ class SkipGraph:
         return s
 
 
-    def all_pairs_route_costs(self):
+    def all_pairs_route_costs(self, startLL):
         """
-        prints the routing costs (number of links) between all pairs.
+        prints the routing costs (number of links) between all pairs in skip graph rooted at startlL.
         returns the sum total of all the route costs
         """
-        n = len(self.level0)
+        l = [n.key for n in startLL.as_list()]
         s = 0
-        for i in range(n):
-            for j in range(n):
+        for i in l:
+            for j in l:
                 cost = self.search_cost(i,j)
                 s+= cost
-                print(str(i) + " " + str(j) + ": " + str(cost))
+                #print(str(i) + " " + str(j) + ": " + str(cost))
         return s
+
+    def all_pairs_route_costs_endpoints(self, startLL):
+        l = [n.key for n in startLL.as_list()]
+        z = min(l)
+        b = max(l)
+        l1 = [n.key for n in startLL.child_with_key(z)]
+        l2 = [n.key for n in startLL.child_with_key(b)]
+
+        s = 0
+        for i in l1:
+            cost = self.search_cost(i,z)
+            s+= cost
+                
+        for i in l2:
+            cost = self.search_cost(i,b)
+            s+= cost
+        return s
+
+
+
+
+
+    def partition_cross(self, startLL):
+        c = 0     
+        left = startLL.children[0]
+        right = startLL.children[1]
+        if left is None or right is None:
+            return
+        else:
+            for i in left:
+                for j in right:
+                    u = i.key 
+                    v = j.key
+                    c+= self.search_cost(u,v)
+                    c+= self.search_cost(v,u)
+              
+        return c
+
+
+    
+    def increment_cross(self):
+        c = 0
+        def helper(startLL):
+            nonlocal c
+            left = startLL.children[0]
+            right = startLL.children[1]
+            if left is None or right is None:
+                return
+            else:
+                left = startLL.children[0]
+                right = startLL.children[1]
+                for i in left:
+                    for j in right:
+                        u = i.key 
+                        v = j.key 
+                        l = [n.key for n in left.as_list()]
+                        if u > v:
+                            w = find_ge(l, v)
+                        else:
+                            w = find_le(l, v)
+                        c+= startLL.search_cost(w,v)
+
+                        l = [n.key for n in right.as_list()]
+                        if v > u:
+                            w = find_ge(l, u)
+                        else:
+                            w = find_le(l, u)
+                        c+= startLL.search_cost(w,u)
+                helper(left)
+                helper(right)
+        helper(self.level0)
+        return c
+
+
+    def increment_cross_one_part(self, startLL):
+        c = 0
+        left = startLL.children[0]
+        right = startLL.children[1]
+        for i in left:
+            for j in right:
+                u = i.key 
+                v = j.key 
+                l = [n.key for n in left.as_list()]
+                if u > v:
+                    w = find_ge(l, v)
+                else:
+                    w = find_le(l, v)
+                c+= startLL.search_cost(w,v)
+
+                l = [n.key for n in right.as_list()]
+                if v > u:
+                    w = find_ge(l, u)
+                else:
+                    w = find_le(l, u)
+                c+= startLL.search_cost(w,u)
+                
+        return c
 
     def start_data_collection(self):
         self.online = True
@@ -495,11 +610,32 @@ def generate_balanced_skipgraph(n, constructor = SkipGraph):
         mvecs = [i + [0] for i in mvecs] + [i + [1] for i in mvecs]
         l -= 1
     S = constructor()
-    for i in range(n):
+    n = list(range(n))
+    random.shuffle(n)
+    for i in n:
         node = LLNode(i)
         node.set_memvec(mvecs[i])
         S.insert(node)
     return S
+
+def all_balanced_skipgraphs(n):
+    l = int(math.log(n,2)) - 3
+    mvecs = [[0,0,0],[1,0,0], [0,1,0], [1,1,0],[0,0,1], [0,1,1], [1,0,1], [1,1,1]]
+    while l > 0:
+        mvecs = [i + [0] for i in mvecs] + [i + [1] for i in mvecs]
+        l -= 1
+
+    sgs = []
+    n = list(range(n))
+    for perm in itertools.permutations(n):
+        S = SkipGraph()
+        for i in perm:
+            node = LLNode(i)
+            node.set_memvec(mvecs[i])
+            S.insert(node)
+        sgs.append(S)
+    return sgs
+
 
 def generate_spine_skipgraph(n, constructor = SkipGraph):
     """
@@ -582,7 +718,30 @@ def generate_identical_random_skipgraphs(n, seed, constructors):
 
 
 if __name__ == "__main__":
-    S1 = generate_random_seeded_skipgraph(12, 81)
-    S2 = generate_random_seeded_skipgraph(12, 81)
-    S1.visualize("before.png")
-    S2.visualize("after.png")
+    p = 3
+    n = 2**p
+    T_lb = lambda k : (2**(k-1))*(((2**k)*(k-1)) + k + 1)
+    sgs = all_balanced_skipgraphs(n)
+    i = 0
+    for SG in sgs:
+        S1 = generate_balanced_skipgraph(n)
+        #crosstot = S1.increment_cross()
+        Y = S1.increment_cross_one_part(S1.level0)
+        TS0 = S1.all_pairs_route_costs(S1.level0.children[0])
+        TS1 = S1.all_pairs_route_costs(S1.level0.children[1])
+        # tot = S1.all_pairs_route_costs(S1.level0) 
+        # a = S1.partition_cross(S1.level0.children[0])
+        # b = S1.partition_cross(S1.level0.children[1])
+        X = S1.partition_cross(S1.level0)
+        Z = S1.all_pairs_route_costs_endpoints(S1.level0)
+
+        if not (Z <= 2*(2**(p-2))*(p-1)):
+            print("no")
+            break
+        # if not (X >= 2*T_lb(p-1) + 2*(n//2)**2 - 2*(2**(p-2))*(p-1)):
+        #     print('no')
+        #     break
+        i+=1 
+        if i % 100 == 0:
+            print(i)
+    

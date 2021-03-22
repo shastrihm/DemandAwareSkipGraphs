@@ -43,6 +43,7 @@ example after definitions
   - recurrence relation, closed form for expected path length
   - proof of optimality (among balanced skip graphs, conjectured among all skip graphs)
     - among balanced SGs proof: our construction achieves minimal sum increment at each partitioning/promotion step
+      - can extend this proof to prove that finding static optimal skip graph for any demand graph is minimal for balanced skip graphs
 - can extend to any distribution that describes clustering behavior (clusters of size a power of 2
    and uniform distribution within clusters)
 

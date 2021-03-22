@@ -22,17 +22,22 @@ def find_ge(a, x):
     print(a, x)
     raise ValueError
 
-def all_SGs_rooted_at(subset, C):
+def all_SGs_rooted_at(subset, C, balanced = False):
     """
     computes all skip graphs rooted at subset and puts
     them all in C
+    balanced = True: computes only all balanced skip graphs rooted at subset
     """
     C[subset] = []
     if len(subset) == 1:
         C[subset] = [[subset]]
         return
     for subsubset in list(powerset(subset)):
-        if len(subsubset) > 0 and len(subsubset) <= len(subset)//2:
+        if balanced:
+            cond = len(subsubset) == len(subset)//2
+        else:
+            cond = len(subsubset) <= len(subset)//2
+        if len(subsubset) > 0 and cond:
         #if len(subsubset) == len(subset)//2:
             othersubsubset = tuple(sorted(tuple(set(subset) - set(subsubset))))
             for left_sgs in C[subsubset]:
@@ -41,6 +46,8 @@ def all_SGs_rooted_at(subset, C):
                     right_sgs= list(right_sgs)
                     new = [subset] + left_sgs + right_sgs
                     C[subset].append(tuple(new))
+
+
 
 
 def SG_nodes(SG):
@@ -58,6 +65,15 @@ def all_SGs_on(V):
         all_SGs_rooted_at(subset, C)
     return C[tuple(V)]
 
+def all_balanced_SGs_on(V):
+    """
+    Returns all balanced skip graphs on node set V, represented as a list of subsets
+    length of V must be power of two
+    """
+    C = {}
+    for subset in list(powerset(V)): # in order of length
+        all_SGs_rooted_at(subset, C, balanced = True)
+    return C[tuple(V)]
 
 def SL_restriction(SG,u):
     """
@@ -76,6 +92,8 @@ def SL_search_cost(SL, u, v, return_value = False):
     tuple of tuples sorted by increasing length
     """
     if u == v:
+        if return_value:
+            return (0, u)
         return 0
     if u < v:
         find = find_le
@@ -116,19 +134,24 @@ def epl_SG(SG,D):
     return aggregate
 
 
-def min_epl_SG(D):
+def min_epl_exhaustive_SG(D, balanced = False, ret_cost = False):
     """
     Returns the skip graph on n nodes with minimal expected path length
     given demand D
+
+    balanced = True: searches over only balanced skip graphs (number of nodes must be pow of 2)
     """
     n = int(math.sqrt(len(D)))
-    print("generating all skip graphs...")
-    SGs = all_SGs_on(list(range(0,n)))
+    #print("generating all skip graphs...")
+    if balanced:
+        SGs = all_balanced_SGs_on(list(range(0,n)))
+    else:
+        SGs = all_SGs_on(list(range(0,n)))
 
     min_cost = math.inf
     best_so_far = None
 
-    print("starting search...")
+    #print("starting search...")
     i = 0
     for SG in SGs:
         cost = epl_SG(SG, D)
@@ -136,10 +159,11 @@ def min_epl_SG(D):
             min_cost = cost
             best_so_far = SG
         i += 1
-        if i % 10000 == 0:
-            print(i)
+        # if i % 10000 == 0:
+        #     print(i)
 
-    print(min_cost)
+    if ret_cost:
+        return (min_cost, best_so_far)
     return best_so_far
 
 def powerset(iterable):
@@ -156,7 +180,7 @@ def visualize_demand(D, path):
     graph = pydot.Dot(fontsize = "15")
     for k in D:
         u,v = k[0], k[1]
-        if D[k] > 0 and abs(u-v) > 1:
+        if D[k] > 0 and u != v:
             nodeu = pydot.Node(str(u) + ".", shape = "circle")
             nodev = pydot.Node(str(v) + ".", shape = "circle")
             edge = pydot.Edge(nodeu, nodev, label = str(D[k]))
@@ -170,6 +194,10 @@ def visualize_tupled_SG(SG, path):
     """
     SG is a tuple-ized SG sorted in increasing order
     """
+    SG = list(SG)
+    SG.sort(key = len)
+    SG.reverse() 
+
     graph = pydot.Dot(rankdir = "TB", fontsize = "15")
     # SG[0] should be level 0
     covered = []
@@ -193,7 +221,6 @@ def visualize_tupled_SG(SG, path):
                 graph.add_node(node1)
                 graph.add_node(node2)
                 graph.add_edge(edge)
-
                 covered.append(set([curr, lev]))
             curr = lev
     graph.write_png(path)
@@ -203,13 +230,62 @@ def visualize_tupled_SG(SG, path):
 
 
 
+def partition_increment_cost(D, partition, complement):
+    SG = (partition, complement, tuple(sorted(partition + complement)))
+    s = 0
+    for u in partition + complement:
+        for v in partition + complement:
+            s+= D[(u,v)]*SG_search_cost(SG, u,v)
+            s+= D[(v,u)]*SG_search_cost(SG, v,u)
+    return s 
+
+    
+
+
+def min_increment_partition_heuristic(D, N):
+    """
+    starting with N = [0,...,n-1], finds subset S of N such that 
+    epl increment is minimized between S --- N -- N \ S, and does this recursively.
+    Even though this is exponential time, how good does this get?
+    """
+    SG = [tuple(N)]
+
+    def helper(base):
+        if len(base) == 1:
+            return
+        P = list(powerset(base))
+        min_cost = math.inf
+        best_so_far = None
+        for part in P:
+            if len(part) <= len(base)//2 and len(part) > 0:
+                comp = tuple(set(base) - set(part))
+                t = partition_increment_cost(D, part, comp)
+                if t < min_cost:
+                    min_cost = t 
+                    best_so_far = [part, comp] 
+        SG.append(best_so_far[0])
+        SG.append(best_so_far[1])
+        helper(best_so_far[0])
+        helper(best_so_far[1])     
+
+    helper(SG[0])
+    return tuple(SG)
+
 
 
 
 
 if __name__ == "__main__":
-    n = 6
-    D = g.random_demand_dict(n)
-    visualize_demand(D, "opt_demand.png")
-    sg = min_epl_SG(D)
-    visualize_tupled_SG(sg, "opt_sg.png")
+    n = 8
+    for i in range(100):
+        D = g.random_demand_dict(n, range = 100)
+        # visualize_demand(D, "opt_demand.png")
+        sg = min_epl_exhaustive_SG(D, balanced = True)
+        # visualize_tupled_SG(sg, "opt_sg.png")
+        sgtest = min_increment_partition_heuristic(D, list(range(n)))
+        if not epl_SG(sg, D) == epl_SG(sgtest, D):
+            print(sg)
+            print(sgtest)
+            print(epl_SG(sg, D),epl_SG(sgtest, D))
+        else:
+            print('ok')

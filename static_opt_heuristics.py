@@ -164,16 +164,19 @@ if __name__ == "__main__":
     n = 16
     N = list(range(n))
 
-    for i in range(1):
+    for n in range(4, 100):
+        N = list(range(n))
         #D = st.g.two_cluster_demand_dict(len(N), n//2 - 1, n//2)
-        D = st.g.random_demand_dict(len(N))
+        D = st.g.random_demand_dict(n)
         #SG = greedy_edge_picking_heuristic(D, N, weight_fn = comprehensive_weight)
         SGrandom = st.random_tupled_SG(n)
         SG = greedy_matching_heuristic(D, N, weight_fn = comprehensive_weight)
         alg = st.epl_SG(SG, D)
         rand = st.epl_SG(SGrandom, D)
         #optcost, opt = st.min_epl_exhaustive_SG(D, ret_cost = True) #exhaustive search
-        print(alg, rand)
+        SGI = st.interleaved_tupled_SG(n)
+
+        print(alg/rand)
     S = lambda k : (2**(k-1))*(((2**k)*(k-1)) + k + 1)
     #print(2*S(lg(n//2)))
     st.visualize_demand(D, "opt_demand.png")

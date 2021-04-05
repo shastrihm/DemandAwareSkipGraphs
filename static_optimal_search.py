@@ -290,6 +290,62 @@ def interleaved_tupled_SG(n):
     return tuple(SG)
 
 
+def spine_tupled_SG(n):
+    """
+    returns a random spine skip graph on n nodes
+    """
+    base = list(range(n))
+    SG = [base]
+    def helper(L):
+        if len(L) == 1:
+            return
+        if len(L) == 2:
+            SG.append([L[0]])
+            SG.append([L[1]])
+            return
+        l = random.sample(L, k = 1)
+        r = list(set(L) - set(l))
+        l = sorted(l)
+        r = sorted(r)
+        SG.append(l)
+        SG.append(r)
+        helper(l)
+        helper(r)
+
+    helper(base)
+    SG = (tuple(x) for x in SG)
+    return tuple(SG)
+
+
+
+def path_tupled_SG(n):
+    """
+    returns a path skip graph on n nodes
+    """
+    base = list(range(n))
+    SG = [base]
+    def helper(L):
+        if len(L) == 1:
+            return
+        if len(L) == 2:
+            SG.append([L[0]])
+            SG.append([L[1]])
+            return
+        l = [i for i in L if L.index(i) <= len(L)//2]
+        r = list(set(L) - set(l))
+        l = sorted(l)
+        r = sorted(r)
+        SG.append(l)
+        SG.append(r)
+        helper(l)
+        helper(r)
+
+    helper(base)
+    SG = (tuple(x) for x in SG)
+    return tuple(SG)
+
+
+
 def random_tupled_SG(n):
     """
     returns a random Skip graph on n nodes

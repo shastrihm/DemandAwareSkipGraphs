@@ -35,8 +35,8 @@ def endpoint_sum(U, V, D, N):
 
 def local_distance_weight(U,V,D,N):
     """
-    same as comprehensive weight, but instead of summing over U \times Ubar pairs, 
-    we sum over U \times V pairs 
+    same as comprehensive weight, but instead of summing over U \times Ubar pairs,
+    we sum over U \times V pairs
     """
     u_sum = local_endpoint_sum(U, V, D)
     v_sum = local_endpoint_sum(V, U, D)
@@ -59,7 +59,7 @@ def local_endpoint_sum(U,V,D):
 
 def constant_distance_weight(U,V,D,N):
     """
-    given skip graph U and skip graph V, only computes 
+    given skip graph U and skip graph V, only computes
     \sum_{(u,v) \in U \times V} |u - v|(D(u,v) + D(v,u))
     """
     s=0
@@ -77,7 +77,7 @@ def constant_weight(U,V,D,N):
     since it is returning a random skip graph
     """
     return 1
-    
+
 
 
 
@@ -103,7 +103,7 @@ def init_graph(D, N, weight_fn = comprehensive_weight):
 def collapse_edge(G, edge, D, N, weight_fn = comprehensive_weight):
     """
     Given graph G with edge, collapses the edge in G by merging
-    the two endpoints. Returns 
+    the two endpoints. Returns
     """
     u,v = edge[0], edge[1]
     Gp = nx.contracted_nodes(G, u, v, self_loops = False)
@@ -116,7 +116,7 @@ def collapse_edge(G, edge, D, N, weight_fn = comprehensive_weight):
     for e in Gp.edges(new_u):
         Gp[e[0]][e[1]]['weight'] = weight_fn(e[0], e[1], D, N)
 
-    return Gp 
+    return Gp
 
 
 def greedy_edge_picking_heuristic(D, N, weight_fn = comprehensive_weight):
@@ -126,13 +126,13 @@ def greedy_edge_picking_heuristic(D, N, weight_fn = comprehensive_weight):
     Final node at the end is the skip graph returned by the heuristic.
     """
     G = init_graph(D, N)
-    currG = G 
-    # find max weight edge 
+    currG = G
+    # find max weight edge
     while len(currG.nodes) > 1:
         edges_by_inc_weight = sorted(currG.edges(data=True), key = lambda x : x[2]['weight'], reverse = True)
         to_collapse = (edges_by_inc_weight[0][0], edges_by_inc_weight[0][1])
         currG = collapse_edge(currG, to_collapse, D, N, weight_fn)
-    # return resulting skip graph 
+    # return resulting skip graph
     return list(currG.nodes)[0]
 
 
@@ -143,47 +143,40 @@ def greedy_matching_heuristic(D,N, weight_fn = comprehensive_weight):
     Final node at the end is the skip graph returned by the heuristic.
     """
     G = init_graph(D, N)
-    currG = G 
+    currG = G
     # find max weight matching
     while len(currG.nodes) > 1:
         matching = nx.max_weight_matching(currG)
         for edge in matching:
             to_collapse = (edge[0], edge[1])
             currG = collapse_edge(currG, to_collapse, D, N, weight_fn)
-    # return resulting skip graph 
+    # return resulting skip graph
     return list(currG.nodes)[0]
 
 def lg(n):
-    i = 0 
+    i = 0
     while n > 1:
         n = n//2
         i += 1
     return i
 
 if __name__ == "__main__":
-    n = 32
+    n = 16
     N = list(range(n))
 
     for i in range(1):
-        D = st.g.two_cluster_demand_dict(len(N), n//2 - 1, n//2)
-        #D = st.g.random_demand_dict(len(N))
+        #D = st.g.two_cluster_demand_dict(len(N), n//2 - 1, n//2)
+        D = st.g.random_demand_dict(len(N))
         #SG = greedy_edge_picking_heuristic(D, N, weight_fn = comprehensive_weight)
-        SGrandom = greedy_edge_picking_heuristic(D, N, weight_fn = constant_weight)
+        SGrandom = st.random_tupled_SG(n)
         SG = greedy_matching_heuristic(D, N, weight_fn = comprehensive_weight)
         alg = st.epl_SG(SG, D)
         rand = st.epl_SG(SGrandom, D)
         #optcost, opt = st.min_epl_exhaustive_SG(D, ret_cost = True) #exhaustive search
         print(alg, rand)
     S = lambda k : (2**(k-1))*(((2**k)*(k-1)) + k + 1)
-    print(2*S(lg(n//2)))
+    #print(2*S(lg(n//2)))
     st.visualize_demand(D, "opt_demand.png")
     #st.visualize_tupled_SG(opt, "opt_sg.png")
     st.visualize_tupled_SG(SG, "opt_sg1.png")
     st.visualize_tupled_SG(SGrandom, "opt_sg_random.png")
-
-
-
-
-
-
-

@@ -115,12 +115,50 @@ def SL_search_cost(SL, u, v, return_value = False):
         return (cost, curr)
     return cost
 
+def SL_search_path(SL, u,v):
+    """
+    computes search path for u to search v in Skip list restriction of u, when SL is a
+    tuple of tuples sorted by increasing length
+    """
+    path = set([u])
+    if u == v:
+        return path
+    if u < v:
+        find = find_le
+    else:
+        find = find_ge
+
+    curr = u
+    for tup in SL:
+        next = find(tup, v)
+        if curr <= next:
+            for i in range(tup.index(curr), tup.index(next)):
+                path.add(tup[i])
+            path.add(next)
+        else:
+            for i in range(tup.index(next), tup.index(curr)):
+                path.add(tup[i])
+            path.add(curr)
+        if next == v:
+            return path
+        curr = next
+    return path
+
 def SG_search_cost(SG, u,v, return_value = False):
     """
     computes cost to search from u to v in skip graph SG
     """
     uSL = SL_restriction(SG, u)
     return SL_search_cost(uSL, u, v, return_value)
+
+
+def SG_search_path(SG, u, v):
+    """
+    returns the path to search from u to v in skip graph SG
+    """
+    uSL = SL_restriction(SG,u)
+    return SL_search_path(uSL, u, v)
+
 
 def epl_SG(SG,D):
     """
@@ -196,7 +234,7 @@ def visualize_tupled_SG(SG, path):
     """
     SG = list(SG)
     SG.sort(key = len)
-    SG.reverse() 
+    SG.reverse()
 
     graph = pydot.Dot(rankdir = "TB", fontsize = "15")
     # SG[0] should be level 0
@@ -226,9 +264,59 @@ def visualize_tupled_SG(SG, path):
     graph.write_png(path)
     return graph
 
+def interleaved_tupled_SG(n):
+    """
+    returns the interleaved skip graph on n (power of 2) nodes
+    """
+    base = list(range(n))
+    SG = [base]
+
+    def helper(L):
+        if len(L) == 1:
+            return
+        if len(L) == 2:
+            SG.append([L[0]])
+            SG.append([L[1]])
+            return
+        l = [i for i in L if L.index(i) % 2 == 0]
+        r = [i for i in L if L.index(i) % 2 != 0]
+        SG.append(l)
+        SG.append(r)
+        helper(l)
+        helper(r)
+
+    helper(base)
+    SG = (tuple(x) for x in SG)
+    return tuple(SG)
 
 
+def random_tupled_SG(n):
+    """
+    returns a random Skip graph on n nodes
+    """
+    base = list(range(n))
+    SG = [base]
 
+    def helper(L):
+        if len(L) == 1:
+            return
+        if len(L) == 2:
+            SG.append([L[0]])
+            SG.append([L[1]])
+            return
+        i = random.randint(1,len(L)//2)
+        l = random.sample(L, k = i)
+        r = list(set(L) - set(l))
+        l = sorted(l)
+        r = sorted(r)
+        SG.append(l)
+        SG.append(r)
+        helper(l)
+        helper(r)
+
+    helper(base)
+    SG = (tuple(x) for x in SG)
+    return tuple(SG)
 
 def partition_increment_cost(D, partition, complement):
     SG = (partition, complement, tuple(sorted(partition + complement)))
@@ -237,14 +325,14 @@ def partition_increment_cost(D, partition, complement):
         for v in partition + complement:
             s+= D[(u,v)]*SG_search_cost(SG, u,v)
             s+= D[(v,u)]*SG_search_cost(SG, v,u)
-    return s 
+    return s
 
-    
+
 
 
 def min_increment_partition_heuristic(D, N):
     """
-    starting with N = [0,...,n-1], finds subset S of N such that 
+    starting with N = [0,...,n-1], finds subset S of N such that
     epl increment is minimized between S --- N -- N \ S, and does this recursively.
     Even though this is exponential time, how good does this get?
     """
@@ -261,12 +349,12 @@ def min_increment_partition_heuristic(D, N):
                 comp = tuple(set(base) - set(part))
                 t = partition_increment_cost(D, part, comp)
                 if t < min_cost:
-                    min_cost = t 
-                    best_so_far = [part, comp] 
+                    min_cost = t
+                    best_so_far = [part, comp]
         SG.append(best_so_far[0])
         SG.append(best_so_far[1])
         helper(best_so_far[0])
-        helper(best_so_far[1])     
+        helper(best_so_far[1])
 
     helper(SG[0])
     return tuple(SG)
@@ -276,16 +364,15 @@ def min_increment_partition_heuristic(D, N):
 
 
 if __name__ == "__main__":
-    n = 8
-    for i in range(100):
-        D = g.random_demand_dict(n, range = 100)
-        # visualize_demand(D, "opt_demand.png")
-        sg = min_epl_exhaustive_SG(D, balanced = True)
-        # visualize_tupled_SG(sg, "opt_sg.png")
-        sgtest = min_increment_partition_heuristic(D, list(range(n)))
-        if not epl_SG(sg, D) == epl_SG(sgtest, D):
-            print(sg)
-            print(sgtest)
-            print(epl_SG(sg, D),epl_SG(sgtest, D))
-        else:
-            print('ok')
+    n = 16
+    d = {}
+    g = interleaved_tupled_SG(n)
+    for i in range(n):
+        for j in range(i+1, n):
+            x = SG_search_cost(g, i, j)
+            if x not in d:
+                d[x] = set()
+            d[x].add(abs(i-j))
+            #print(i,j,abs(i-j),SG_search_cost(g, i, j))
+    #print(d)
+    visualize_tupled_SG(g, "big.png")

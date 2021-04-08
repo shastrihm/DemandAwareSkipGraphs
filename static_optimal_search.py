@@ -374,6 +374,11 @@ def random_tupled_SG(n):
     SG = (tuple(x) for x in SG)
     return tuple(SG)
 
+
+
+
+    
+
 def partition_increment_cost(D, partition, complement):
     SG = (partition, complement, tuple(sorted(partition + complement)))
     s = 0

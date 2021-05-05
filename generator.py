@@ -115,6 +115,15 @@ def uniform_demand_dict(n):
         D[k] = 1
     return D
 
+def single_source_demand_dict(source, n):
+    """
+    Only pairs with nonzero chance are (source, x) for all x
+    """
+    D = init_dict(n)
+    for k in D:
+        if k[0] == source:
+            D[k] = 1
+    return D
 def random_demand_dict(n, range = 10):
     """
     randomly assign weights to pairs, from random.randint(0,range)

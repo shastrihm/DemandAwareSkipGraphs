@@ -466,7 +466,7 @@ class SkipGraph:
         for i in l1:
             cost = self.search_cost(i,z)
             s+= cost
-                
+
         for i in l2:
             cost = self.search_cost(i,b)
             s+= cost
@@ -477,7 +477,7 @@ class SkipGraph:
 
 
     def partition_cross(self, startLL):
-        c = 0     
+        c = 0
         left = startLL.children[0]
         right = startLL.children[1]
         if left is None or right is None:
@@ -485,15 +485,15 @@ class SkipGraph:
         else:
             for i in left:
                 for j in right:
-                    u = i.key 
+                    u = i.key
                     v = j.key
                     c+= self.search_cost(u,v)
                     c+= self.search_cost(v,u)
-              
+
         return c
 
 
-    
+
     def increment_cross(self):
         c = 0
         def helper(startLL):
@@ -507,8 +507,8 @@ class SkipGraph:
                 right = startLL.children[1]
                 for i in left:
                     for j in right:
-                        u = i.key 
-                        v = j.key 
+                        u = i.key
+                        v = j.key
                         l = [n.key for n in left.as_list()]
                         if u > v:
                             w = find_ge(l, v)
@@ -534,8 +534,8 @@ class SkipGraph:
         right = startLL.children[1]
         for i in left:
             for j in right:
-                u = i.key 
-                v = j.key 
+                u = i.key
+                v = j.key
                 l = [n.key for n in left.as_list()]
                 if u > v:
                     w = find_ge(l, v)
@@ -549,7 +549,7 @@ class SkipGraph:
                 else:
                     w = find_le(l, u)
                 c+= startLL.search_cost(w,u)
-                
+
         return c
 
     def start_data_collection(self):
@@ -729,7 +729,7 @@ if __name__ == "__main__":
         Y = S1.increment_cross_one_part(S1.level0)
         TS0 = S1.all_pairs_route_costs(S1.level0.children[0])
         TS1 = S1.all_pairs_route_costs(S1.level0.children[1])
-        # tot = S1.all_pairs_route_costs(S1.level0) 
+        # tot = S1.all_pairs_route_costs(S1.level0)
         # a = S1.partition_cross(S1.level0.children[0])
         # b = S1.partition_cross(S1.level0.children[1])
         X = S1.partition_cross(S1.level0)
@@ -741,7 +741,6 @@ if __name__ == "__main__":
         # if not (X >= 2*T_lb(p-1) + 2*(n//2)**2 - 2*(2**(p-2))*(p-1)):
         #     print('no')
         #     break
-        i+=1 
+        i+=1
         if i % 100 == 0:
             print(i)
-    

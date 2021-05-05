@@ -42,6 +42,27 @@ def grounded_middleman_hop_frequencies(D):
                 freqs[x] += 1*d[(u,v)]
     return freqs
 
+def grounded_middleman_hop_frequencies_node_specific(D, u):
+    """
+    returns a dict f where f[k] is the number of distinct search paths
+    that node k appears in for the path graph on n nodes,
+    weighted by D(u,v) for demand graph D
+    """
+    d = D.copy()
+    n = int(len(d)**0.5)
+    freqs = {i : 0 for i in range(n)}
+    for v in range(n):
+        path = []
+        if u < v:
+            # [u+1, ..., v]
+            path = list(range(u+1,v+1))
+        elif v < u:
+            # [u-1, ..., v]
+            path = list(range(v,u))
+        for x in path:
+            freqs[x] += 1*d[(u,v)]
+    return freqs
+
 def middleman_hop_frequencies(D, SG):
     """
     given a  skip graph (tupled) on n nodes,
@@ -59,6 +80,26 @@ def middleman_hop_frequencies(D, SG):
             path.remove(u)
             for x in path:
                 freqs[x] += 1*d[(u,v)]
+    return freqs
+
+
+def middleman_hop_frequencies_node_specific(D, SG, u):
+    """
+    given a  skip graph (tupled) on n nodes,
+    returns a dict f where f[k] is the number of distinct search paths (initiated by u)
+    that node k appears in, weighted by D(u,v) for demand graph D
+    """
+    d = D.copy()
+    #really_safe_normalise_in_place(d)
+
+    nodes = st.SG_nodes(SG)
+    freqs = {n : 0 for n in nodes}
+    for v in nodes:
+        path = st.SG_search_path(SG, u, v)
+        path.remove(u)
+        for x in path:
+            freqs[x] += 1*d[(u,v)]
+    print(freqs)
     return freqs
 
 
@@ -99,6 +140,7 @@ def color_for_LL_fmap(LL, fmap, lmap):
     """
     fp = {k:fmap[k] for k in fmap if k in LL}
     lp = {k:lmap[k] for k in fmap if k in LL}
+    #print(fmap, lmap, LL)
     val = sum(fp.values())/sum(lp.values())
     return colormap(val)
 
@@ -134,6 +176,7 @@ def color_for_LL_node_specific(u, LL, SG, D):
     if linecost == 0:
         return colormap(0)
     return colormap(cost/linecost)
+
 
 
 
@@ -234,7 +277,6 @@ if __name__ == "__main__":
     clusters = []
     for i in range(len(idxs) - 1):
         clusters.append(keys[idxs[i]:idxs[i+1]])
-    print(clusters)
     D = st.g.n_cluster_demand_dict(n, clusters)
 
     randSG = st.random_tupled_SG(n)
@@ -248,6 +290,8 @@ if __name__ == "__main__":
     h = epl_contribution_freqs(D, heurSG)
 
     SP = st.spine_tupled_SG(n)
+    path = st.path_tupled_SG(n)
+    p = epl_contribution_freqs(D, path)
 
 
     # rand = {i : f[i]/l[i] for i in f}
@@ -255,9 +299,13 @@ if __name__ == "__main__":
     # heuristic = {i : h[i]/l[i] for i in h}
 
     u = 15
-    viz_colors_tupled_SG(heurSG, "before.png", lambda LL : color_for_LL_node_specific(u, LL, heurSG, D))
-    viz_colors_tupled_SG(randSG, "after.png", lambda LL : color_for_LL_node_specific(u, LL, randSG, D))
-    viz_colors_tupled_SG(SG, "after1.png", lambda LL : color_for_LL_node_specific(u, LL, SG, D))
+    h = middleman_hop_frequencies_node_specific(D, heurSG, u)
+    r = middleman_hop_frequencies_node_specific(D, randSG, u)
+    i = middleman_hop_frequencies_node_specific(D, SG, u)
+    p = grounded_middleman_hop_frequencies_node_specific(D, u)
+    viz_colors_tupled_SG(heurSG, "before.png", lambda LL : color_for_LL_fmap(LL, h, p))
+    viz_colors_tupled_SG(randSG, "after.png", lambda LL : color_for_LL_fmap(LL, r, p))
+    viz_colors_tupled_SG(SG, "after1.png", lambda LL : color_for_LL_fmap(LL, i, p))
     path = st.path_tupled_SG(n)
     print(st.epl_SG(randSG, D), st.epl_SG(heurSG, D), st.epl_SG(SG, D), st.epl_SG(path, D))
     # sum of freqs.values() is equal to weighted path length

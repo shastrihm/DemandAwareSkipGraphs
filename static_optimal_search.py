@@ -86,6 +86,17 @@ def SL_restriction(SG,u):
     SL.sort(key = len)
     return SL
 
+def adjacent_in(SG, u, v):
+    """
+    returns True if u is adjacent to v in SG
+    """
+    SL = SL_restriction(SG, u)
+    for tup in SL:
+        if v in tup:
+            if abs(tup.index(v) - tup.index(u)) == 1:
+                return True
+    return False
+
 def SL_search_cost(SL, u, v, return_value = False):
     """
     computes cost for u to search v in Skip list restriction of u, when SL is a
@@ -99,6 +110,39 @@ def SL_search_cost(SL, u, v, return_value = False):
         find = find_le
     else:
         find = find_ge
+
+    curr = u
+    cost = 0
+    for tup in SL:
+        next = find(tup, v)
+        cost += abs(tup.index(curr) - tup.index(next))
+        if next == v:
+            curr = next
+            if return_value:
+                return (cost, curr)
+            return cost
+        curr = next
+    if return_value:
+        return (cost, curr)
+    return cost
+
+
+def SL_search_cost_zigzag(SL, u, v, return_value = False):
+    """
+    computes cost for u to search v in Skip list restriction of u, when SL is a
+    tuple of tuples sorted by increasing length (with zigzag method)
+    """
+    if u == v:
+        if return_value:
+            return (0, u)
+        return 0
+
+    def find(tup, v):
+        x = find_le(tup, v)
+        y = find_ge(tup, v)
+        if abs(x - v) < abs(y - v):
+            return x
+        return y
 
     curr = u
     cost = 0
@@ -144,12 +188,15 @@ def SL_search_path(SL, u,v):
         curr = next
     return path
 
-def SG_search_cost(SG, u,v, return_value = False):
+def SG_search_cost(SG, u,v, return_value = False, zigzag = False):
     """
     computes cost to search from u to v in skip graph SG
     """
     uSL = SL_restriction(SG, u)
-    return SL_search_cost(uSL, u, v, return_value)
+    if not zigzag:
+        return SL_search_cost(uSL, u, v, return_value)
+    else:
+        return SL_search_cost_zigzag(uSL, u, v, return_value)
 
 
 def SG_search_path(SG, u, v):
@@ -160,7 +207,7 @@ def SG_search_path(SG, u, v):
     return SL_search_path(uSL, u, v)
 
 
-def epl_SG(SG,D):
+def epl_SG(SG,D, optimized = math.inf):
     """
     computes expected path length of SG given demand dict D
     """
@@ -169,6 +216,8 @@ def epl_SG(SG,D):
         u,v = k[0], k[1]
         if D[k] > 0:
             aggregate += D[k]*SG_search_cost(SG, u, v)
+        if aggregate >= optimized:
+            return -1
     return aggregate
 
 
@@ -192,8 +241,8 @@ def min_epl_exhaustive_SG(D, balanced = False, ret_cost = False):
     #print("starting search...")
     i = 0
     for SG in SGs:
-        cost = epl_SG(SG, D)
-        if cost < min_cost:
+        cost = epl_SG(SG, D, optimized = min_cost)
+        if cost != -1 and cost < min_cost:
             min_cost = cost
             best_so_far = SG
         i += 1
@@ -227,6 +276,17 @@ def visualize_demand(D, path):
             graph.add_edge(edge)
     graph.write_png(path)
     return graph
+
+def demand_as_matrix(D):
+    s = int(len(D)**0.5)
+    X = []
+    for i in range(s):
+        X.append([0]*s)
+    for u in range(s):
+        for v in range(s):
+            X[u][v] = D[(u,v)]
+    return X
+
 
 def visualize_tupled_SG(SG, path):
     """
@@ -377,7 +437,7 @@ def random_tupled_SG(n):
 
 
 
-    
+
 
 def partition_increment_cost(D, partition, complement):
     SG = (partition, complement, tuple(sorted(partition + complement)))
@@ -425,15 +485,4 @@ def min_increment_partition_heuristic(D, N):
 
 
 if __name__ == "__main__":
-    n = 16
-    d = {}
-    g = interleaved_tupled_SG(n)
-    for i in range(n):
-        for j in range(i+1, n):
-            x = SG_search_cost(g, i, j)
-            if x not in d:
-                d[x] = set()
-            d[x].add(abs(i-j))
-            #print(i,j,abs(i-j),SG_search_cost(g, i, j))
-    #print(d)
-    visualize_tupled_SG(g, "big.png")
+    pass
